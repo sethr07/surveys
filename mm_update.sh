@@ -1,4 +1,14 @@
 #!/bin/bash
+
+#Scrip that does the maxmind stuff.
+#Makes the mmdb directory.
+#Installs mmdb databases
+#Installs Country wise csv file
+#installs country codes
+#Calls python script for creating GeoIpWHoisCountry.csv
+
+
+
 DESTDIR=$HOME/code/surveys/mmdb
 CURRDIR=$HOME/code/surveys
 
@@ -45,6 +55,14 @@ zip="geoip_download?edition_id=GeoLite2-Country-CSV&license_key=$key&suffix=zip"
 wget $csv_url
 unzip $zip
 
+echo "Getting Country Code file"
+cc_url="https://dev.maxmind.com/static/csv/codes/iso3166.csv?lang=en"
+wget $cc_url
+cc_file="iso3166.csv?lang=en"
+cc_fname="countrycodes.txt"
+cp $cc_file $cc_fname
+
+echo "Getting data from GeoCountryWhois.csv"
 dbdate=`ls -d "GeoLite2-Country-CSV"_* | awk -F"_" '{print $2}'`
 dirname="GeoLite2-Country-CSV_$dbdate"
 fname1="GeoLite2-Country-Blocks-IPv4.csv"
