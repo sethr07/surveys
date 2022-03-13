@@ -43,11 +43,17 @@ now=`date +%Y%m%d`
 csv_url="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country-CSV&license_key=$key&suffix=zip"
 zip="geoip_download?edition_id=GeoLite2-Country-CSV&license_key=$key&suffix=zip"
 wget $csv_url
-wget https://dev.maxmind.com/static/csv/codes/country_continent.csv?lang=en
 unzip $zip
+
+dbdate=`ls -d "GeoLite2-Country-CSV"_* | awk -F"_" '{print $2}'`
+dirname="GeoLite2-Country-CSV_$dbdate"
+fname1="GeoLite2-Country-Blocks-IPv4.csv"
+fname2="GeoLite2-Country-Locations-en.csv"
+cp $dirname/$fname1 $DESTDIR/$fname1
+cp $dirname/$fname2 $DESTDIR/$fname2
+
 cd $CURRDIR
 echo "creating csv file of ips country wise"
 python3 MMCreateGeoIP.py
-
 echo "Done"
 

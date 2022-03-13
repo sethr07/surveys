@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 
-indir=os.environ['HOME']+'/code/surveys/mmdb/GeoLite2-Country-CSV_20220308/'
+indir=os.environ['HOME']+'/code/surveys/mmdb/'
 v4file=indir+'GeoLite2-Country-Blocks-IPv4.csv'
 localefile = indir+'GeoLite2-Country-Locations-en.csv'
 outfile = indir+'GeoIPCountryWhois.csv'

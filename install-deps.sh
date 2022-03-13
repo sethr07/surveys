@@ -3,12 +3,17 @@ startdir=`/bin/pwd`
 
 # this script will install the various bits'n'pieces needed to get this
 # survey stuff working
+# installs all python modules required
+# installs zmap
+# isntalls go 1.15.5 for zgrab2
+# installs zgrab2
+# runs mm_update script which makes the mmdb dir and builds the required databases
+# Also sets gopath for go to work
 
-# kinda loosely tested on a relatively clean ubuntu 16.04 - YMMV
+# Last tested on 18.04 - 2022/03
 
 sudo apt-get update
 sudo apt-get -y upgrade
-
 sudo apt-get -y install wget
 sudo apt-get -y install git unzip
 
@@ -36,23 +41,10 @@ done
 
 sudo apt-get -y install zmap
 
+# maxmind stuff
 ./mm_update.sh
 
-sudo -H pip install  testresources
-sudo -H pip install  pandas
-sudo -H pip install  argparse
-sudo -H pip install  datetime
-sudo -H pip install  python-dateutil
-sudo -H pip install  geoip2
-sudo -H pip install  graphviz
-sudo -H pip install  jsonpickle
-sudo -H pip install  pympler
-sudo -H pip install  pytz
-sudo -H pip install  netaddr
-sudo -H pip install  cryptography
-sudo -H pip install  wordcloud
-
-if [ ! -d /usr/lib/go-1.10 ]
+if [ ! -d /usr/lib/go-1.15 ]
 then
 mkdir -p $HOME/code/go
 	cd $HOME/code/go
@@ -73,15 +65,11 @@ mkdir -p $HOME/code/go
 	export GOPATH=$HOME/go
 fi
 
-
-
-
-# got get stuff
+# zgrab2 stuff
 go get github.com/zmap/zgrab2
 cd $GOPATH/src/github.com/zmap/zgrab2
 go build
 # put it on PATH
 sudo ln -sf $HOME/go/src/github.com/zmap/zgrab/zgrab /usr/local/bin
-
 cd $starddir
 echo "Done! (I hope:-)"

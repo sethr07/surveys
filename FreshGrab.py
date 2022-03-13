@@ -1,3 +1,10 @@
+###########################
+# Input is from ZMap 
+# Grabs output from Zgrab2
+# Gives information about each port scanned
+# returns output file which contains one json structure per line
+###########################
+
 import os, sys, argparse, tempfile, gc
 import json, jsonpickle
 import time
@@ -15,7 +22,6 @@ from netaddr import IPNetwork
 # 443 - https/tls double check
 
 # use zgrab to grab fresh records for a set of IPs
-
 # command line arg handling 
 parser=argparse.ArgumentParser(description='Do a fresh grab of IPs')
 parser.add_argument('-i','--input',     
@@ -45,10 +51,10 @@ ztimeout=' -timeout 2'
 def_country='IE'
 country=def_country
 
-# default timeout for zgrab, in seconds
-ztimeout=' -t 2'
+# default timeout for zgrab2, in seconds
+ztimeout=' -t 2' #2 secs
 
-# port parameters
+# zgrab2 port parameters
 pparms={ 
         '22': 'ssh -p 22',
         '25': 'smtp -p 25',
@@ -114,6 +120,7 @@ if os.path.isfile(args.outfile):
 
 out_f=open(args.outfile,"a")
 
+# setting up maxmind database in mmdb
 mm_setup()
 
 with open(args.infile,'r') as f:

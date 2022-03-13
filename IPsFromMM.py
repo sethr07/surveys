@@ -29,7 +29,7 @@ args=parser.parse_args()
 
 #default cases incase user does not provide custom inputs
 def_country="IE"
-def_indir=os.environ['HOME']+'/code/surveys/mmdb/GeoLite2-Country-CSV_20220308'
+def_indir=os.environ['HOME']+'/code/surveys/mmdb/'
 def_outfile="mm-ips."+def_country
 def_v4file='GeoIPCountryWhois.csv'
 
