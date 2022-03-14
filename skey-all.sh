@@ -1,5 +1,5 @@
 #!bin/bash
-
+#set -x
 
 function whenisitagain()
 {
@@ -7,7 +7,7 @@ function whenisitagain()
 }
 NOW=$(whenisitagain)
 
-#startdir = `/bin/pwd`
+startdir=`/bin/pwd`
 echo "Running $0 at $NOW"
 
 
@@ -34,6 +34,7 @@ pdir=''
 domm='no'
 dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{print $2}' | sed -e 's/\/$//'`
 mmdbdir=$HOME/$dpath
+
 zmport="25"
 skips=""
 
@@ -86,10 +87,59 @@ then
 	usage
 fi
 
-#check if country is known
+#check if country is known - glitcy. Need to find a solution
+#cknown=`grep $country /home/rs/code/surveys/mmdb/countrycodes.txt`
+#echo $cknown
+#if [[ "$country" != "$cknown" && "$country" != "XX" ]]
+#then
+#	echo "Country $country isn't known"
+#	exit 87
+#fi
 
 
+# place for results - might get changed by pdir
+resdir=$outdir/$country\-$NOW
+# this is the first one that changes disk
 
+if [ "$pdir" == "" ]
+then
+	if [ ! -d $outdir ]
+	then
+		mkdir -p $outdir
+	fi
+	if [ ! -d $outdir ]
+	then
+		echo "Can't create $outdir - exiting"
+		exit 5
+	fi
+
+	# just in case an error causes us to crap out within a second
+	while [ -d $resdir ]
+	do
+		echo "Name collision! Sleeping a bit"
+		sleep 5
+		NOW=$(whenisitagain)
+		resdir=$outdir/$country-$NOW
+	done
+	if [ ! -d $resdir ]
+	then
+		mkdir -p $resdir
+	fi
+else
+	# continue processing of partly done directory content
+	resdir=$pdir
+	if [ ! -d $resdir ]
+	then
+		echo "No intermediate directory $pdir - exiting"
+		exit 8
+	fi
+fi
+
+cd $resdir
+# make life easier
+#cp $srcdir/Makefile .
+logf=$NOW.out
+run=$NOW
 
 echo "Starting at $NOW, log in $logf" 
 echo "Starting at $NOW, log in $logf" >>$logf
@@ -107,16 +157,52 @@ TELLTALE_MM="mm-ips."$country".v4"
 TELLTALE_ZMAP="zmap.ips"
 TELLTALE_GRAB="input.ips"
 TELLTALE_FRESH="records.fresh"
+TELLTALE_CLUSTER="collisions.json"
 
+if [ "$pdir" != "" ]
+then
+	# figure out where we're at...
+	# if we have a $TELLTALE_GRAB then no need to grab
+	if [ -f $TELLTALE_MM ]
+	then
+		SKIP_MM=yes
+	fi
+	if [ -f $TELLTALE_ZMAP ]
+	then
+		SKIP_ZMAP=yes
+	fi
+	if [ -f $TELLTALE_GRAB ]
+	then
+		SKIP_GRAB=yes
+	fi
+	# if we have a $TELLTALE_FRESH then no need to fresh
+	if [ -f $TELLTALE_FRESH ]
+	then
+		SKIP_FRESH=yes
+	fi
+	# if we have a $TELLTALE_CLUSTER no need to cluster
+	if [ -f $TELLTALE_CLUSTER ]
+	then
+		SKIP_CLUSTER=yes
+	fi
+	# if we have a graphed no need to graph
+	if [ -f graphs.done ]
+	then
+		SKIP_GRAPH=yes
+	fi
+fi
 
 echo "Starting Maxmind stuff"
-python3 IPsFromMM.py -c $country
+python3 /$srcdir/IPsFromMM.py -c $country >>$logf 2>&1
 
 echo "starting zmap"
-sudo zmap $zmap_parms -p $zmport -w $TELLTALE_MM -o TELLTALE_ZMAP
+sudo zmap $zmap_parms -p $zmport -w $TELLTALE_MM -o $TELLTALE_ZMAP
 ln -s $TELLTALE_ZMAP $TELLTALE_GRAB
 echo "zmap finished."
 
-echo "starting grab"
-python3 FreshGrab.py -i $TELLTALE_GRAB -o $TELLTALE_FRESH -c $country
+echo "starting fresh grab"
+python3 /$srcdir/FreshGrab.py -i $TELLTALE_GRAB -o $TELLTALE_FRESH -c $country
 echo "grabbed finished."
+
+#echo "Starting check for collisions."
+#python3 /$srcdir/SameKeys.py
