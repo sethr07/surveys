@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 #set -x
 
 function whenisitagain()
@@ -148,9 +148,9 @@ echo "Starting at $NOW, log in $logf" >>$logf
 unset SKIP_MM
 unset SKIP_ZMAP
 unset SKIP_GRAB
-unset SKIP_FRESH
-unset SKIP_CLUSTER
-unset SKIP_GRAPH
+SKIP_FRESH="yes"
+SKIP_CLUSTER="yes"
+SKIP_GRAPH="yes"
 
 # files uses as tell-tales
 TELLTALE_MM="mm-ips."$country".v4"
@@ -193,7 +193,7 @@ then
 fi
 
 echo "Starting Maxmind stuff"
-python3 /$srcdir/IPsFromMM.py -c $country >>$logf 2>&1
+$srcdir/IPsFromMM.py -c $country >>$logf 2>&1
 
 echo "starting zmap"
 sudo zmap $zmap_parms -p $zmport -w $TELLTALE_MM -o $TELLTALE_ZMAP

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Grabs IPs from GeoIPWhois.csv which is created using maxmind 
 # country and ipv4 network block databases. This script filters out
 # the network blocks according to the country provided.

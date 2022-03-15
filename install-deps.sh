@@ -17,26 +17,29 @@ sudo apt-get -y upgrade
 sudo apt-get -y install wget
 sudo apt-get -y install git unzip
 
+sudo apt-get -y install python3-pip
+sudo -H pip3 install pandas netaddr
+
 if [ ! -d $HOME/code ]
 then
-	mkdir -p $HOME/code
+    mkdir -p $HOME/code
 fi 
 if [ ! -d $HOME/code/surveys ]
 then
-	cd $HOME/code
-	git clone -b rahul-01 https://github.com/sethr07/surveys.git
+    cd $HOME/code
+    git clone -b rahul-01 https://github.com/sethr07/surveys.git
 else
-	# may as well do an update
-	cd $HOME/code/surveys
-	git pull
+    # may as well do an update
+    cd $HOME/code/surveys
+    git pull
 fi
 
 for subdir in runs IE EE 
 do
-	if [ ! -d $HOME/data/smtp/$subdir ]
-	then
-		mkdir -p $HOME/data/smtp/$subdir
-	fi
+    if [ ! -d $HOME/data/smtp/$subdir ]
+    then
+    	mkdir -p $HOME/data/smtp/$subdir
+    fi
 done
 
 sudo apt-get -y install zmap
@@ -44,25 +47,31 @@ sudo apt-get -y install zmap
 # maxmind stuff
 ./mm_update.sh
 
-if [ ! -d /usr/lib/go-1.15 ]
+if [ ! -d /usr/lib/go-1.15.5 ]
 then
-mkdir -p $HOME/code/go
-	cd $HOME/code/go
-	GOTARBALL=go1.15.5.linux-amd64.tar.gz
-	GOURL=https://golang.org/dl/$GOTARBALL
-	wget $GOURL
-	tar xzvf $GOTARBALL
-	sudo mv go /usr/lib/go-1.15.5
-	sudo ln -sf /usr/lib/go-1.15.5/usr/lib/go
-	sudo ln -sf /usr/lib/go-1.15.5/bin/go /usr/bin/go
+    mkdir -p $HOME/code/go
+    cd $HOME/code/go
+    GOTARBALL=go1.15.5.linux-amd64.tar.gz
+    GOURL=https://golang.org/dl/$GOTARBALL
+    wget $GOURL
+    if [ ! -f $GOTARBALL ]
+    then
+	echo "Can't read $GOTARBALL"
+    	exit 1
+    fi
+    tar xzvf $GOTARBALL
+    sudo mv go /usr/lib/go-1.15.5
+    sudo ln -sf /usr/lib/go-1.15.5/usr/lib/go
+    sudo ln -sf /usr/lib/go-1.15.5/bin/go /usr/bin/go
 
-	# add GOPATH to .bashrc
-	donealready=`grep GOPATH $HOME/.bashrc`
-	if [[ "$donealready" == "" ]]
-	then
-		echo "export GOPATH=$HOME/go" >>$HOME/.bashrc
-	fi
-	export GOPATH=$HOME/go
+    # add GOPATH to .bashrc
+    donealready=`grep GOPATH $HOME/.bashrc`
+    if [[ "$donealready" == "" ]]
+    then
+    	echo "export GOPATH=$HOME/go" >>$HOME/.bashrc
+    fi
+    export GOPATH=$HOME/go
+    rm -f $GOTARBALL
 fi
 
 # zgrab2 stuff

@@ -27,13 +27,21 @@ fi
 
 cd $DESTDIR
 
-key="AnRjFrGF9x75YmrD"
+# it's probably wrong to include that in a git repo, it should likely
+# read from a file
+KEYFILE="$HOME/mm-key.txt"
+if [ ! -f $KEYFILE ]
+then
+    echo "No $KEYFILE - exiting"
+    exit 1
+fi
+key=`cat $KEYFILE`
 for db in City Country ASN
 do
+	tarball="GeoLite2-$db.tar.gz"
 	url="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-$db&license_key=$key&suffix=tar.gz"
 	echo "Getting $url"
-	wget -q $url
-	tarball="geoip_download?edition_id=GeoLite2-$db&license_key=$key&suffix=tar.gz"
+	wget -q $url -O $ofile
 	if [ "$?" != "0" ]
 	then
 		echo "Failed to download $url"
@@ -45,6 +53,7 @@ do
 		cp $dirname/$fname.mmdb $DESTDIR/$fname-$dbdate.mmdb
 		# update link
 		ln -sf $DESTDIR/$fname-$dbdate.mmdb $DESTDIR/$fname.mmdb
+		rm -f $tarball
 	fi
 done
 
@@ -54,6 +63,7 @@ csv_url="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Cou
 zip="geoip_download?edition_id=GeoLite2-Country-CSV&license_key=$key&suffix=zip"
 wget $csv_url
 unzip $zip
+rm -f $zip
 
 echo "Getting Country Code file"
 cc_url="https://dev.maxmind.com/static/csv/codes/iso3166.csv?lang=en"
@@ -61,6 +71,7 @@ wget $cc_url
 cc_file="iso3166.csv?lang=en"
 cc_fname="countrycodes.txt"
 cp $cc_file $cc_fname
+rm -f $cc_file
 
 echo "Getting data from GeoCountryWhois.csv"
 dbdate=`ls -d "GeoLite2-Country-CSV"_* | awk -F"_" '{print $2}'`
