@@ -112,7 +112,7 @@ then
 fi
 
 # check if country is known
-cknown=`grep $country $mmdbdir/countrycodes.txt | awk -F, '{print $1}'`
+cknown=`grep $country $mmdbdir/countrycodes.csv | awk -F, '{print $1}'`
 if [[ "$country" != "$cknown" && "$country" != "XX" ]]
 then
 	echo "Country $country isn't known"
