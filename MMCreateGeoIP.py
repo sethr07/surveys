@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #script for making GeipCountrywhois csv for input to zmap
 import os
 import pandas as pd
