@@ -1,13 +1,31 @@
 #!/bin/bash
 
+# Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 #Scrip that does the maxmind stuff.
 #Makes the mmdb directory.
 #Installs mmdb databases
 #Installs Country wise csv file
 #installs country codes
 #Calls python script for creating GeoIpWHoisCountry.csv
-
-
 
 DESTDIR=$HOME/code/surveys/mmdb
 CURRDIR=$HOME/code/surveys
@@ -69,9 +87,10 @@ echo "Getting Country Code file"
 cc_url="https://dev.maxmind.com/static/csv/codes/iso3166.csv?lang=en"
 wget $cc_url
 cc_file="iso3166.csv?lang=en"
-cc_fname="countrycodes.txt"
+cc_fname="cc.csv"
 cp $cc_file $cc_fname
 rm -f $cc_file
+awk -F "\"*,\"*" '{print $1}' cc.csv > countrycodes.csv
 
 echo "Getting data from GeoCountryWhois.csv"
 dbdate=`ls -d "GeoLite2-Country-CSV"_* | awk -F"_" '{print $2}'`
@@ -83,6 +102,6 @@ cp $dirname/$fname2 $DESTDIR/$fname2
 
 cd $CURRDIR
 echo "creating csv file of ips country wise"
-python3 MMCreateGeoIP.py
+$CURRDIR/MMCreateGeoIP.py
 echo "Done"
 
