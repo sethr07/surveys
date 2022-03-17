@@ -186,7 +186,7 @@ def mm_setup():
     countryreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-Country.mmdb')
     countrycodes = []
 
-    with open(mmdbdir + 'countrycodes.csv') as ccf:
+    with open(mmdbdir + 'countrycodes.txt') as ccf:
         lines=csv.reader(ccf)
         for row in lines:
             countrycodes.append(row[0])

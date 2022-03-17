@@ -41,7 +41,7 @@ do
 	tarball="GeoLite2-$db.tar.gz"
 	url="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-$db&license_key=$key&suffix=tar.gz"
 	echo "Getting $url"
-	wget -q $url -O $ofile
+	wget -q $url -O $tarball
 	if [ "$?" != "0" ]
 	then
 		echo "Failed to download $url"
