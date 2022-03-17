@@ -1,7 +1,30 @@
+#!/usr/bin/python
+
+# Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import re
 import json
 import jsonpickle
 import copy
+import csv
 import os, sys, socket
 import geoip2.database
 
@@ -149,7 +172,7 @@ def getnextfprint(fp):
 # MaxMind Stuff 
 ###########################
 mmdbpath = 'code/surveys/mmdb/'
-mmdbir = os.environ['HOME'] + '/' + mmdbpath
+mmdbdir = os.environ['HOME'] + '/' + mmdbpath
 
 #sets up API calls in mmdb directory
 def mm_setup():
@@ -158,15 +181,15 @@ def mm_setup():
     global countryreader
     global countrycodes
 
-    asnreader = geoip2.database.Reader(mmdbir + 'GeoLite2-ASN.mmdb')
-    cityreader = geoip2.database.Reader(mmdbir + 'GeoLite2-City.mmdb')
-    countryreader = geoip2.database.Reader(mmdbir + 'GeoLite2-Country.mmdb')
+    asnreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-ASN.mmdb')
+    cityreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-City.mmdb')
+    countryreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-Country.mmdb')
     countrycodes = []
 
-    with open(mmdbir + 'countrycodes.csv') as ccf:
-        for line in ccf:
-            cc = line.strip()
-            countrycodes.append(cc)
+    with open(mmdbdir + 'countrycodes.csv') as ccf:
+        lines=csv.reader(ccf)
+        for row in lines:
+            countrycodes.append(row[0])
         ccf.close
 
 #returns back the ip address information in the database
@@ -208,7 +231,6 @@ def mm_ipcc(ip, cc):
             return False
     else:
         return False
-###########################
 
 
 

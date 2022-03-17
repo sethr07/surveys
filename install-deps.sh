@@ -18,7 +18,7 @@ sudo apt-get -y install wget
 sudo apt-get -y install git unzip
 
 sudo apt-get -y install python3-pip
-sudo -H pip3 install pandas netaddr
+sudo -H pip3 install pandas netaddr jsonpickle
 
 if [ ! -d $HOME/code ]
 then

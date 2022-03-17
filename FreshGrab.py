@@ -1,3 +1,25 @@
+#!/usr/bin/python
+
+# Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 ###########################
 # Input is from ZMap 
 # Grabs output from Zgrab2
@@ -12,14 +34,6 @@ import subprocess
 import copy
 from SurveyFuncs import *
 from netaddr import IPNetwork
-
-#Port list
-# 22 - ssh
-# 25 - smtp
-# 80 - http
-# 110 - pop3
-# 143 - imap
-# 443 - https/tls double check
 
 # use zgrab to grab fresh records for a set of IPs
 # command line arg handling 
@@ -44,12 +58,15 @@ parser.add_argument('-c','--country',
                     help='country in which we\'re interested')
 args=parser.parse_args()
 
-defports=['22', '25', '80' '110', '143', '443']
+# default (all) ports to scan - added in 587 for fun (wasn't in original scans)
+defports=['22', '25', '110', '143', '443', '587', '993']
 ztimeout=' -timeout 2'
 
 # default country 
 def_country='IE'
 country=def_country
+if args.country is not None:
+    country=args.country
 
 # default timeout for zgrab2, in seconds
 ztimeout=' -t 2' #2 secs
@@ -129,6 +146,13 @@ with open(args.infile,'r') as f:
     for ip in f:
         #print(ip)
         ip=ip.strip() # lose the CRLF
+        # if we have this one we're done
+        if ip in ipdone:
+            print (sys.stderr, ip,"is in ipdone - skipping")
+            continue
+        else: 
+            pass
+            print (sys.stderr, "Doing",ip)
         #if not mm_ipcc(ip,country):
             #print (sys.stderr, "Bad country (fg)" + ip + " is not in " + country + " - skipping")
             #ooc+=1
