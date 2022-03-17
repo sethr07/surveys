@@ -27,6 +27,7 @@ import copy
 import csv
 import os, sys, socket
 import geoip2.database
+import ipaddress
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -221,17 +222,16 @@ def mm_info(ip):
 
 #checks for ip against country using mmdb databases
 def mm_ipcc(ip, cc):
+    theip=ipaddress.IPv4Address(ip.decode('utf-8'))
     if cc == "XX":
         return True
-    elif cc not in countrycodes:
-        countryresponse = countryreader.country(ip)
+    else:
+        countryresponse = countryreader.country(theip)
+        #print(sys.stderr,"cr=",str(countryresponse),"ip=",ip,"cc=",cc)
         if cc == countryresponse.country.iso_code:
             return True
         else:
             return False
-    else:
-        return False
-
 
 
     

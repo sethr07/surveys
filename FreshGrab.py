@@ -60,7 +60,15 @@ args=parser.parse_args()
 
 # default (all) ports to scan - added in 587 for fun (wasn't in original scans)
 defports=['22', '25', '110', '143', '443', '587', '993']
-ztimeout=' -timeout 2'
+
+# You need zgrab2 for this, to build that run install-deps.sh
+# first to get source, then goto $HOME/go/src/github.com/zmap/zgrab2
+# and run ``make`` - all going well that'll create the binary below
+zgrab_bin="go/src/github.com/zmap/zgrab2/cmd/zgrab2/zgrab2"
+zgrab_path=os.environ['HOME']+"/"+zgrab_bin
+if not os.access(zgrab_path,os.R_OK):
+    print(sys.stderr,"Can't find zgrab2 binary",zgrab_path,"exiting")
+    sys.exit(1)
 
 # default country 
 def_country='IE'
@@ -150,13 +158,13 @@ with open(args.infile,'r') as f:
         if ip in ipdone:
             print (sys.stderr, ip,"is in ipdone - skipping")
             continue
-        else: 
-            pass
-            print (sys.stderr, "Doing",ip)
-        #if not mm_ipcc(ip,country):
-            #print (sys.stderr, "Bad country (fg)" + ip + " is not in " + country + " - skipping")
-            #ooc+=1
-            #continue
+        #else: 
+            #pass
+            #print (sys.stderr, "Doing",ip)
+        if not mm_ipcc(ip,country):
+            print (sys.stderr, "Bad country " + ip + " is not in " + country + " - skipping")
+            ooc+=1
+            continue
 
         ipstart=time.time()
         jthing={}
@@ -164,7 +172,9 @@ with open(args.infile,'r') as f:
         jthing['writer']="FreshGrab.py"
         for port in ports:
             try:
-                cmd='./zgrab2 '+  pparms[port] + ztimeout
+
+                cmd=zgrab_path + " " +  pparms[port] + ztimeout
+                #print(sys.stderr,"zgrab cmd=",cmd)
                 proc=subprocess.Popen(cmd.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                 pc=proc.communicate(input=ip.encode())
                 lines=pc[0].split(b'\n')
