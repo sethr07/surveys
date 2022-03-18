@@ -27,11 +27,11 @@
 #installs country codes
 #Calls python script for creating GeoIpWHoisCountry.csv
 
-DESTDIR=$HOME/code/surveys/mmdb
+#DESTDIR=$HOME/code/surveys/mmdb
 CURRDIR=$HOME/code/surveys
-
-#dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{print $2}' | sed -e 's/\/$//'`
-#DESTDIR=$HOME/$dpath
+dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{print $2}' | sed -e 's/\/$//'`
+DESTDIR=$HOME/$dpath
+#echo $DESTDIR
 
 if [ ! -d $DESTDIR ]
 then
@@ -101,6 +101,6 @@ cp $dirname/$fname1 $DESTDIR/$fname1
 cp $dirname/$fname2 $DESTDIR/$fname2
 
 echo "creating csv file of ips country wise"
-$CURRDIR/MMCreateGeoIP.py
+python3 $CURRDIR/MMCreateGeoIP.py
 echo "Done"
 
