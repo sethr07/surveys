@@ -100,7 +100,6 @@ fname2="GeoLite2-Country-Locations-en.csv"
 cp $dirname/$fname1 $DESTDIR/$fname1
 cp $dirname/$fname2 $DESTDIR/$fname2
 
-cd $CURRDIR
 echo "creating csv file of ips country wise"
 $CURRDIR/MMCreateGeoIP.py
 echo "Done"

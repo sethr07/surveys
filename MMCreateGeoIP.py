@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/python3
 
 #script for making GeipCountrywhois csv for input to zmap
 import os
