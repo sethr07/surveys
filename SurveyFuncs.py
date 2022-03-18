@@ -36,14 +36,15 @@ class OneFP():
                     'ip',
                     'asn',
                     'asndec',
+                    'clusternum',
                     'fprints',
                     'csize',
-                    'nsrc',
+                    'nrcs',
                     'rcs',
                     'analysis']
     def __init__(self):
         self.writer='unknown'
-        self.ip_record=-1
+        self.ip_record=-1 #no of ips
         self.ip=''
         self.asn=''
         self.asndec=0
@@ -79,10 +80,12 @@ MAXSAN=100
 
 portstrings=['p22','p25','p110','p143','p443','p587','p993']
 
-
 def printOneFP(f):
     print (jsonpickle.encode(f))
 
+###########################
+# Functions for getting same keys
+###########################
 def j2o(jthing):
     ot=OneFP()
     #print json.dumps(jthing)
@@ -100,9 +103,7 @@ def j2o(jthing):
     #printOneFP(ot)
     return ot
 
-###########################
-# Functions for getting same keys
-###########################
+
 def getnextfprint(fp):
     # read the next fingerprint from the file pointer
     # fprint is a json structure, pretty-printed, so we'll
@@ -168,6 +169,8 @@ def getnextfprint(fp):
         return onething
     else:
         return line
+
+
 
 ###########################
 # MaxMind Stuff 
