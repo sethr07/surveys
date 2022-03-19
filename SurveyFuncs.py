@@ -171,6 +171,39 @@ def getnextfprint(fp):
         return line
 
 
+# check if supposed domain name is a bogon so as to avoid
+# doing e.g. DNS checks
+def fqdn_bogon(dn):
+    try:
+        # if there are no dots, for us, it's bogus
+        if dn.find('.')==-1:
+            return True
+        # if it ends-with ".internal" it's bogus
+        if dn.endswith(".internal"):
+            return True
+        # if it ends-with ".example.com" it's bogus
+        if dn.endswith("example.com"):
+            return True
+        # if it ends-with ".localdomain" it's bogus
+        if dn.endswith(".localdomain"):
+            return True
+        # if it ends-with ".local" it's bogus
+        if dn.endswith(".local"):
+            return True
+        # if it ends-with ".arpa" it's bogus
+        if dn.endswith(".arpa"):
+            return True
+        # if it's ESMTP it's bogus
+        if dn=="ESMTP":
+            return True
+        # wildcards are also bogons
+        if dn.find('*') != -1:
+            return True
+    except:
+        return True
+    return False
+
+##########################
 
 ###########################
 # MaxMind Stuff 

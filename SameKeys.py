@@ -197,3 +197,32 @@ else:
                 nameset['banner']=''
             
             
+            
+            
+
+            try:
+                if thisone.writer=="FreshGrab.py":
+                    fp=j_content['p22']['data']['ssh']['key_exchange']['server_host_key']['fingerprint_sha256'] 
+                    print("fp for ssh: ", fp)
+                    print("\n")
+                    shk=j_content['p22']['data']['ssh']['key_exchange']['server_host_key']
+                    if shk['algorithm']=='ssh-rsa':
+                        thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
+                    else:
+                        thisone.analysis['p22']['alg']=shk['algorithm']
+                else:
+                    fp=j_content['p22']['ssh']['v2']['server_host_key']['fingerprint_sha256'] 
+                    shk=j_content['p22']['ssh']['v2']['server_host_key']
+                    if shk['key_algorithm']=='ssh-rsa':
+                        thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
+                    else:
+                        thisone.analysis['p22']['alg']=shk['key_algorithm']
+                thisone.fprints['p22']=fp
+                somekey=True
+            except Exception as e: 
+                #print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisone.ip)
+                pass
+
+
+            
+           
