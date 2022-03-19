@@ -195,21 +195,22 @@ else:
             except Exception as e: 
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''
-            
-            
-            
-            
-
+    
             try:
                 if thisone.writer=="FreshGrab.py":
-                    fp=j_content['p22']['data']['ssh']['key_exchange']['server_host_key']['fingerprint_sha256'] 
-                    print("fp for ssh: ", fp)
-                    print("\n")
-                    shk=j_content['p22']['data']['ssh']['key_exchange']['server_host_key']
+                    fp=j_content['p22']['data']['ssh']['result']['key_exchange']['server_host_key']['fingerprint_sha256'] 
+                    #print("fp for ssh: ", fp)
+                    #print("\n")
+                    shk=j_content['p22']['data']['ssh']['result']['key_exchange']['server_host_key']
+                    #print("SSH: ", shk)
+                    #print("\n")
                     if shk['algorithm']=='ssh-rsa':
+                        print("it is ")
                         thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
                     else:
                         thisone.analysis['p22']['alg']=shk['algorithm']
+                        print(shk['algorithm'])
+                #dont know what this section (->) is doing        
                 else:
                     fp=j_content['p22']['ssh']['v2']['server_host_key']['fingerprint_sha256'] 
                     shk=j_content['p22']['ssh']['v2']['server_host_key']
@@ -220,9 +221,58 @@ else:
                 thisone.fprints['p22']=fp
                 somekey=True
             except Exception as e: 
-                #print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisone.ip)
+                print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisone.ip)
                 pass
 
+            besty=[]
+            nogood=True # assume none are good
+            tmp={}
+            # try verify names a bit
+            #print("Printing nameste?")
+            #print(nameset)
+            for k in nameset:
+                v=nameset[k]
+                #print("Printing V: ", v)
+                #print "checking: " + k + " " + v
+                # see if we can verify the value as matching our give IP
+                if v != '' and not fqdn_bogon(v):
+                    try:
+                        rip=socket.gethostbyname(v)
+                        #print(rip)
+                        if rip == thisone.ip:
+                            besty.append(k)
+                        else:
+                            tmp[k+'-ip']=rip
+                        # some name has an IP, even if not what we expect
+                        nogood=False
+                    except Exception as e: 
+                        #oddly, an NXDOMAIN seems to cause an exception, so these happen
+                        #print >> sys.stderr, "Error making DNS query for " + v + " for ip:" + thisone.ip + " " + str(e)
+                        pass
+
+            for k in tmp:
+                nameset[k]=tmp[k]
+                
+            nameset['allbad']=nogood
+            nameset['besty']=besty
+    
+            if not badrec and somekey:
+                goodcount += 1
+                fingerprints.append(thisone)
+            else:
+                bads[badcount]=j_content
+                badcount += 1
+            overallcount += 1
+    
+            # update average
+            ipend=time.time()
+            thistime=ipend-ipstart
+            peripaverage=((overallcount*peripaverage)+thistime)/(overallcount+1)
+            if overallcount % 5 == 0:
+                print (sys.stderr, "Reading fingerprints and rdns, did: " + str(overallcount) + \
+                        " most recent ip " + thisone.ip + \
+                        " average time/ip: " + str(peripaverage) \
+                        + " last time: " + str(thistime))
 
             
            

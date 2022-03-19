@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,6 +21,7 @@
 
 #script for making GeipCountrywhois csv for input to zmap
 import os
+import sys
 import pandas as pd
 
 indir=os.environ['HOME']+'/code/surveys/mmdb/'

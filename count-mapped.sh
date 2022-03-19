@@ -24,28 +24,29 @@
 
 # count how many IPs were zmap'd, how many p25 listeners and percentages
 
-TOP="$HOME/data/smtp/runs"
+TOP="$HOME/data/smtp/runs/IE-20220315-203316"
 
 tot_mapped=0
 tot_p25s=0
 
-for rundir in $TOP/??-201[89]*
+
+#for file in $TOP/??-201[89]*
+#do
+for log in $rundir/201*.out
 do
-	for log in $rundir/201*.out
-	do
-		runname=`basename $rundir`
-		twolines=`grep -B1 "zmap: completed" $log`
-		if [[ "$twolines" != "" ]]
-		then
-			mapped=`echo $twolines | awk '{print $6}'`
-			p25s=`echo $twolines | awk '{print $12}'`
-			percent=`echo $twolines | awk '{print $25}'`
-			echo "$runname: $mapped mapped and $p25s port25 listeners, being $percent"
-			tot_mapped=$((tot_mapped+mapped))
-			tot_p25s=$((tot_p25s+p25s))
-		fi
-	done
+	runname=`basename $rundir`
+	twolines=`grep -B1 "zmap: completed" $log`
+	if [[ "$twolines" != "" ]]
+	then
+		mapped=`echo $twolines | awk '{print $6}'`
+		p25s=`echo $twolines | awk '{print $12}'`
+		percent=`echo $twolines | awk '{print $25}'`
+		echo "$runname: $mapped mapped and $p25s port25 listeners, being $percent"
+		tot_mapped=$((tot_mapped+mapped))
+		tot_p25s=$((tot_p25s+p25s))
+	fi
 done
+#done
 
 ov_percent="0.$((tot_p25s*10000/tot_mapped))%"
 
