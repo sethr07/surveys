@@ -101,6 +101,6 @@ cp $dirname/$fname1 $DESTDIR/$fname1
 cp $dirname/$fname2 $DESTDIR/$fname2
 
 echo "creating csv file of ips country wise"
-python3 $CURRDIR/MMCreateGeoIP.py
+$CURRDIR/MMCreateGeoIP.py
 echo "Done"
 
