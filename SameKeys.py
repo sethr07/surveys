@@ -205,11 +205,12 @@ else:
                     #print("SSH: ", shk)
                     #print("\n")
                     if shk['algorithm']=='ssh-rsa':
-                        print("it is ")
+                        #print("it is rsa\n")
+                        #print(shk['rsa_public_key']['length'])
                         thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
                     else:
                         thisone.analysis['p22']['alg']=shk['algorithm']
-                        print(shk['algorithm'])
+                        #print(shk['algorithm'])
                 #dont know what this section (->) is doing        
                 else:
                     fp=j_content['p22']['ssh']['v2']['server_host_key']['fingerprint_sha256'] 
@@ -224,6 +225,34 @@ else:
                 print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisone.ip)
                 pass
 
+            #port 110
+
+
+            #port 143
+            try:
+                if thisone.writer=="FreshGrab.py":
+                    cert=j_content['p143']['data']['tls']['server_certificates']['certificate']
+                    fp=j_content['p143']['data']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    get_tls(thisone.writer,'p143',j_content['p143']['data']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
+                else:
+                    cert=j_content['p143']['pop3']['starttls']['tls']['certificate']
+                    fp=j_content['p143']['imap']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
+                    get_tls(thisone.writer,'p143',j_content['p143']['imap']['starttls']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
+                get_certnames('p143',cert,nameset)
+                thisone.fprints['p143']=fp
+                somekey=True
+            except Exception as e: 
+                #print >> sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e)
+                pass
+
+            #port 443
+
+
+            #port 587
+
+            #port 993
+            
+            ####
             besty=[]
             nogood=True # assume none are good
             tmp={}
@@ -273,6 +302,8 @@ else:
                         " most recent ip " + thisone.ip + \
                         " average time/ip: " + str(peripaverage) \
                         + " last time: " + str(thistime))
+            f.close
+            gc.collect()            
 
-            
-           
+#print(fingerprints)
+

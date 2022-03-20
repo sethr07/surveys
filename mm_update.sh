@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,19 +19,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
-#Scrip that does the maxmind stuff.
-#Makes the mmdb directory.
-#Installs mmdb databases
-#Installs Country wise csv file
+#
+##################################
+#Script that setups the maxmind directory.
+#Installs mmdb databases - asn, city, country
+#Installs Country csvs 
 #installs country codes
-#Calls python script for creating GeoIpWHoisCountry.csv
+#Calls python script for creating GeoIPWHoisCountry.csv
 
 #DESTDIR=$HOME/code/surveys/mmdb
+
 CURRDIR=$HOME/code/surveys
 dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{print $2}' | sed -e 's/\/$//'`
 DESTDIR=$HOME/$dpath
-#echo $DESTDIR
 
 if [ ! -d $DESTDIR ]
 then
@@ -45,8 +45,8 @@ fi
 
 cd $DESTDIR
 
-# it's probably wrong to include that in a git repo, it should likely
-# read from a file
+#you might need to change this location depening on your setup
+#get your key from maxmind website
 KEYFILE="$HOME/mm-key.txt"
 if [ ! -f $KEYFILE ]
 then
@@ -54,6 +54,7 @@ then
     exit 1
 fi
 key=`cat $KEYFILE`
+
 for db in City Country ASN
 do
 	tarball="GeoLite2-$db.tar.gz"
@@ -83,7 +84,7 @@ wget $csv_url
 unzip $zip
 rm -f $zip
 
-echo "Getting Country Code file"
+echo "Getting Country Codes file"
 cc_url="https://dev.maxmind.com/static/csv/codes/iso3166.csv?lang=en"
 wget $cc_url
 cc_file="iso3166.csv?lang=en"
@@ -102,5 +103,5 @@ cp $dirname/$fname2 $DESTDIR/$fname2
 
 echo "creating csv file of ips country wise"
 $CURRDIR/MMCreateGeoIP.py
-echo "Done"
+echo "MMDB Done"
 

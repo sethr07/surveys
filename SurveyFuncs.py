@@ -1,5 +1,5 @@
-#!/usr/bin/python
-
+#!/usr/bin/python3
+#
 # Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+#
 import re
 import json
 import jsonpickle
@@ -28,6 +28,7 @@ import csv
 import os, sys, socket
 import geoip2.database
 import ipaddress
+from dateutil import parser as dparser 
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -202,6 +203,72 @@ def fqdn_bogon(dn):
     except:
         return True
     return False
+
+# analyse the tls details - this ought work for other ports as
+# well as p25
+# scandate is needed to check if cert was expired at time of
+# scan
+def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
+    #print tls
+    try:
+        # we'll put each in a try/except to set true/false values
+        # would chain work in browser
+        # two flavours of TLS struct - one from Censys and one from local zgrabs
+        # first is the local variant, 2nd censys.io
+        if writer == 'FreshGrab.py':
+            # local
+            tlsdets['cipher_suite']=tls['handshake_log']['server_hello']['cipher_suite']['value']
+            tlsdets['browser_trusted']=tls['handshake_log']['server_certificates']['validation']['browser_trusted']
+            tlsdets['self_signed']=tls['handshake_log']['server_certificates']['certificate']['parsed']['signature']['self_signed']
+            notbefore=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['start'])
+            notafter=dparser.parse(tls['server_certificates']['certificate']['parsed']['validity']['end'])
+
+            try:
+                spki=tls['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']
+                if spki['key_algorithm']['name']=='RSA':
+                    tlsdets['rsalen']=spki['rsa_public_key']['length']
+                elif spki['key_algorithm']['name']=='ECDSA':
+                    tlsdets['ecdsacurve']=spki['ecdsa_public_key']['curve']
+                else:
+                    tlsdets['spkialg']=spki['key_algorithm']['name']
+            except:
+                print(sys.stderr, "RSA exception for ip: " + ip + "spki:" + \
+                                str(tls['server_certificates']['certificate']['parsed']['subject_key_info']))
+                tlsdets['spkialg']="unknown"
+
+        else:
+            # censys.io - not tested
+            tlsdets['cipher_suite']=int(tls['cipher_suite']['id'],16) 
+            tlsdets['browser_trusted']=tls['validation']['browser_trusted']
+            tlsdets['self_signed']=tls['certificate']['parsed']['signature']['self_signed']
+            notbefore=dparser.parse(tls['certificate']['parsed']['validity']['start'])
+            notafter=dparser.parse(tls['certificate']['parsed']['validity']['end'])
+
+            try:
+                spki=tls['certificate']['parsed']['subject_key_info']
+                if spki['key_algorithm']['name']=='rsa':
+                    tlsdets['rsalen']=spki['rsa_public_key']['length']
+                elif spki['key_algorithm']['name']=='ECDSA':
+                    tlsdets['ecdsacurve']=spki['ecdsa_public_key']['curve']
+                else:
+                    tlsdets['spkialg']=spki['key_algorithm']['name']
+            except:
+                print >>sys.stderr, "RSA exception for ip: " + ip + "spki:" + \
+                                str(tls['server_certificates']['certificate']['parsed']['subject_key_info']) 
+                tlsdets['spkialg']="unknown"
+
+        if (notbefore <= scandate and notafter > scandate):
+            tlsdets['timely']=True
+        elif (notbefore > scandate):
+            tlsdets['timely']=False
+        elif (notafter < scandate):
+            tlsdets['timely']=False
+        #tlsdets['ip']=ip
+    except Exception as e: 
+        print (sys.stderr, "get_tls exception for " + ip + ":" + portstr + str(e))
+        pass
+    return True
+
 
 ##########################
 
