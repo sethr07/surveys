@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.9
 #
 # Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -83,6 +83,34 @@ portstrings=['p22','p25','p110','p143','p443','p587','p993']
 
 def printOneFP(f):
     print (jsonpickle.encode(f))
+
+
+
+#functions to make clusters
+def indexport(index):
+    return portstrings[index]
+
+def portindex(pname):
+    for pind in range(0,len(portstrings)):
+        if portstrings[pind]==pname:
+            return pind
+    print (sys.stderr, "Error - unknown port: " + pname)
+    return -1
+
+def collmask(mask,k1,k2):
+    try:
+        lp=portindex(k1)
+        rp=portindex(k2)
+        intmask=int(mask,16)
+        intmask |= (1<<(rp+8*lp)) 
+        newmask="0x%016x" % intmask
+    except Exception as e: 
+        print (sys.stderr, "collmask exception, k1: " + k1 + " k2: " + k2 + " lp:" + str(lp) + " rp: " + str(rp) + " exception: " + str(e))  
+        pass
+    return newmask
+
+
+
 
 ###########################
 # Functions for getting same keys
@@ -208,6 +236,12 @@ def fqdn_bogon(dn):
 # well as p25
 # scandate is needed to check if cert was expired at time of
 # scan
+# writer is local scans or censys.io
+# portstr is port no
+# tls is the tls structure for the port
+# ip is the address
+# tlsdets is where to store the data
+# scandate - when the scan was taken to verify tls certs
 def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
     #print tls
     try:
@@ -217,12 +251,16 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
         # first is the local variant, 2nd censys.io
         if writer == 'FreshGrab.py':
             # local
-            tlsdets['cipher_suite']=tls['handshake_log']['server_hello']['cipher_suite']['value']
-            tlsdets['browser_trusted']=tls['handshake_log']['server_certificates']['validation']['browser_trusted']
-            tlsdets['self_signed']=tls['handshake_log']['server_certificates']['certificate']['parsed']['signature']['self_signed']
-            notbefore=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['start'])
-            notafter=dparser.parse(tls['server_certificates']['certificate']['parsed']['validity']['end'])
-
+            tlsdets['cipher_suite']=tls['handshake_log']['server_hello']['cipher_suite']['value'] # some int value
+            print(tlsdets['cipher_suite'])
+            tlsdets['browser_trusted']=tls['handshake_log']['server_certificates']['validation']['browser_trusted'] # true or false
+            print(tlsdets['browser_trusted'])
+            tlsdets['self_signed']=tls['handshake_log']['server_certificates']['certificate']['parsed']['signature']['self_signed'] #true or false
+            print(tlsdets['self_signed'])
+            notbefore=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['start']) # start date
+            print(notbefore)
+            notafter=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['end']) # end date
+            print(notafter)
             try:
                 spki=tls['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']
                 if spki['key_algorithm']['name']=='RSA':
@@ -253,8 +291,8 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
                 else:
                     tlsdets['spkialg']=spki['key_algorithm']['name']
             except:
-                print >>sys.stderr, "RSA exception for ip: " + ip + "spki:" + \
-                                str(tls['server_certificates']['certificate']['parsed']['subject_key_info']) 
+                print (sys.stderr, "RSA exception for ip: " + ip + "spki:" + \
+                                str(tls['server_certificates']['certificate']['parsed']['subject_key_info'])) 
                 tlsdets['spkialg']="unknown"
 
         if (notbefore <= scandate and notafter > scandate):
@@ -268,6 +306,61 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
         print (sys.stderr, "get_tls exception for " + ip + ":" + portstr + str(e))
         pass
     return True
+
+# Extract a CN= from a DN, if present - moar curses on the X.500 namers!
+# mind you, X.500 names were set in stone in 1988 so it's a bit late. 
+# Pity we still use 'em though. 
+def dn2cn(dn):
+    try:
+        start_needle="CN="
+        start_pos=dn.find(start_needle)
+        if start_pos==-1:
+            # no commonName there... bail
+            return ''
+        start_pos += len(start_needle)
+        end_needle=","
+        end_pos=dn.find(end_needle,start_pos)
+        if end_pos==-1:
+            end_pos=len(dn)
+        cnstr=dn[start_pos:end_pos]
+        #print "dn2cn " + cnstr + " d: " + dn + " s: " + str(start_pos) + " e: " + str(end_pos) 
+    except Exception as e: 
+        print (sys.stderr, "dn2cn exception " + str(e))
+        return ''
+    return cnstr
+
+def get_certnames(portstring,cert,nameset):
+    try:
+        dn=cert['parsed']['subject_dn'] 
+        dn_fqdn=dn2cn(dn)
+        nameset[portstring+'dn'] = dn_fqdn
+    except Exception as e: 
+        #print (sys.stderr, "FQDN dn exception " + str(e) + " for record:" + str(count))
+        pass
+    # name from cert SAN
+    try:
+        sans=cert['parsed']['extensions']['subject_alt_name'] 
+        san_fqdns=sans['dns_names']
+        # we ignore all non dns_names - there are very few in our data (maybe 145 / 12000)
+        # and they're mostly otherName with opaque OID/value so not that useful. (A few
+        # are emails but we'll skip 'em for now)
+        #print "FQDN san " + str(san_fqdns) 
+        sancount=0
+        for san in san_fqdns:
+            nameset[portstring+'san'+str(sancount)]=san_fqdns[sancount]
+            sancount += 1
+            # there are some CRAAAAAAZZZY huge certs out there - saw one with >1500 SANs
+            # which slows us down loads, so we'll just max out at 20
+            if sancount >= MAXSAN:
+                toobig=str(len(san_fqdns))
+                nameset['san'+str(sancount+1)]="Bollox-eoo-many-sans-1-" + toobig
+                print (sys.stderr, "Too many bleeding ( " + toobig + ") sans ")
+                break
+    except Exception as e: 
+        #these are v. common
+        #print (sys.stderr, "FQDN san exception " + str(e) + " for record:" + str(count))
+        pass
+    return
 
 
 ##########################
@@ -285,11 +378,13 @@ def mm_setup():
     global countryreader
     global countrycodes
 
+    #sets up the apis
     asnreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-ASN.mmdb')
     cityreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-City.mmdb')
     countryreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-Country.mmdb')
     countrycodes = []
 
+    #get country coes iso file 
     with open(mmdbdir + 'countrycodes.csv') as ccf:
         lines=csv.reader(ccf)
         for row in lines:

@@ -47,7 +47,7 @@ function usage()
 
 srcdir=$HOME/code/surveys
 country="IE"
-outdir=$HOME/data/smtp/runs
+outdir=$HOME/data/smtp/runs/
 ipssrc=''
 pdir=''
 domm='no'
