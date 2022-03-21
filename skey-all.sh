@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,9 +19,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+#
 #set -x
-
+########################
 function whenisitagain()
 {
 	date -u +%Y%m%d-%H%M%S
@@ -267,8 +267,8 @@ else
 		echo "starting maxmind"
 		echo "starting maxmind" >>$logf
 		$srcdir/IPsFromMM.py -c $country >>$logf 2>&1 
-		echo "maxmind done"
-		echo "maxmind done" >>$logf
+		echo "Maxmind setup done. We have countrywise IPs"
+		echo "Maxmind done" >>$logf
 	fi
 fi
 

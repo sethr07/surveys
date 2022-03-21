@@ -1,4 +1,4 @@
-#!/usr/bin/python3.9
+#!/usr/bin/python3
 #
 # Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from operator import index
 import re
 import json
 import jsonpickle
@@ -46,12 +47,12 @@ class OneFP():
     def __init__(self):
         self.writer='unknown'
         self.ip_record=-1 #no of ips
-        self.ip=''
-        self.asn=''
-        self.asndec=0
-        self.clusternum=0
-        self.fprints={}
-        self.csize=1
+        self.ip='' #ip
+        self.asn='' #autonomous system info from mm
+        self.asndec=0 
+        self.clusternum=0 #what cluster is it in
+        self.fprints={} #fingeprints for each ip
+        self.csize=1 #cluster size
         self.nrcs=0
         self.rcs={}
         self.analysis={}
@@ -87,9 +88,12 @@ def printOneFP(f):
 
 
 #functions to make clusters
+
+#reutrns the port string depeing on the index. - tested ok
 def indexport(index):
     return portstrings[index]
 
+#returns the index depending upon the port name - tested ok
 def portindex(pname):
     for pind in range(0,len(portstrings)):
         if portstrings[pind]==pname:
@@ -97,6 +101,7 @@ def portindex(pname):
     print (sys.stderr, "Error - unknown port: " + pname)
     return -1
 
+#returns back new mask based on the two ports - not sure what is exactly happening tho
 def collmask(mask,k1,k2):
     try:
         lp=portindex(k1)
@@ -109,7 +114,17 @@ def collmask(mask,k1,k2):
         pass
     return newmask
 
-
+#expands the mask - tested ok - not sure what is exactly happening tho
+def expandmask(mask):
+    emask=""
+    intmask=int(mask,16)
+    portcount=len(portstrings)
+    for i in range(0,portcount):
+        for j in range(0,portcount):
+            cmpmask = (1<<(j+8*i)) 
+            if intmask & cmpmask:
+                emask += indexport(i) + "==" + indexport(j) + ";"
+    return emask
 
 
 ###########################
@@ -310,6 +325,8 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
 # Extract a CN= from a DN, if present - moar curses on the X.500 namers!
 # mind you, X.500 names were set in stone in 1988 so it's a bit late. 
 # Pity we still use 'em though. 
+# not sure why are we using this - ask Prof.
+# dn = distinguished name
 def dn2cn(dn):
     try:
         start_needle="CN="

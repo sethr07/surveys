@@ -157,6 +157,7 @@ else:
     
             thisone.analysis['nameset']={}
             nameset=thisone.analysis['nameset']
+            print("\nDoing analysis for ip: ", thisone.ip)
             try:
                 # name from reverse DNS
                 rdnsrec=socket.gethostbyaddr(thisone.ip)
@@ -176,17 +177,17 @@ else:
                 if thisone.writer=="FreshGrab.py":
                     #print(p25['data']['smtp']['result'])
                     banner=p25['data']['smtp']['result']['banner'] #this matches the reverse dns (not all of them ofc) 
-                #else:
-                    #banner=p25['smtp']['starttls']['banner'] 
+                else:
+                    banner=p25['smtp']['starttls']['banner'] 
                 
                 ts=banner.split()
-                print(ts)
+                #print(ts)
                 if ts[0]=="220":
                     banner_fqdn=ts[1]
-                    print("fqdn banner: \n")
-                    print(banner_fqdn)
+                    #print("fqdn banner: \n")
+                    #print(banner_fqdn)
                     nameset['banner']=banner_fqdn
-                #need t work this out ->    
+                #need to work this out ->    
                 elif ts[0].startswith("220-"):
                     print("Startws with fqdn: \n")
                     banner_fqdn=ts[0][4:]
@@ -224,7 +225,7 @@ else:
                 thisone.fprints['p22']=fp
                 somekey=True
             except Exception as e: 
-                print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisone.ip)
+                print(sys.stderr, "p22 exception  for:" + thisone.ip + ":" + str(e))
                 pass
 
             #port 110
@@ -234,7 +235,7 @@ else:
                     fp=j_content['p110']['data']['pop3']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     get_tls(thisone.writer,'p25',j_content['p110']['data']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
-                    #need to figue this one ->
+                    #censys stuff
                     fp=j_content['p110']['pop3']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     cert=j_content['p110']['pop3']['starttls']['tls']['certificate']
                     get_tls(thisone.writer,'p25',j_content['p110']['pop3']['starttls']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
@@ -267,10 +268,10 @@ else:
                 if thisone.writer=="FreshGrab.py":
                     fp=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     cert=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']['server_certificates']['certificate']
-                    print("P443: \n")
-                    print("fp is:", fp)
-                    print("cert is:", cert)
-                    get_tls(thisone.writer,'p443',j_content['p443']['data']['http']['response']['request']['tls_handshake'],j_content['ip'],thisone.analysis['p443'],scandate)
+                    #print("P443: \n")
+                    #print("fp is:", fp)
+                    #print("cert is:", cert)
+                    get_tls(thisone.writer,'p443',j_content['p443']['data']['http']['result']['response']['request']['tls_log'],j_content['ip'],thisone.analysis['p443'],scandate)
                 else:
                     #censys.io - not tested
                     fp=j_content['p443']['https']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
@@ -289,7 +290,7 @@ else:
                 if thisone.writer=="FreshGrab.py":
                     fp=j_content['p587']['data']['smtp']['results']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     cert=j_content['p587']['data']['smtp']['results']['tls']['handshake_log']['server_certificates']['certificate']
-                    get_tls(thisone.writer,'p587',j_content['p587']['data']['tls'],j_content['ip'],thisone.analysis['p587'],scandate)
+                    get_tls(thisone.writer,'p587',j_content['p587']['data']['smtp']['results']['tls'],j_content['ip'],thisone.analysis['p587'],scandate)
                     somekey=True
                     get_certnames('p587',cert,nameset)
                     thisone.fprints['p587']=fp
@@ -308,11 +309,11 @@ else:
                     print("P 993: \n")
                     print("Fp is: ", fp)
                     print("cert is:", cert)
-                    get_tls(thisone.writer,'p993',j_content['p993']['data']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
-                else:
-                    fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
-                    cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
-                    get_tls(thisone.writer,'p993',j_content['p993']['imaps']['tls']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
+                    get_tls(thisone.writer,'p993',j_content['p993']['data']['imap']['results']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
+                #else:
+                    #fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
+                    #cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
+                    #get_tls(thisone.writer,'p993',j_content['p993']['imaps']['tls']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
                 get_certnames('p993',cert,nameset)
                 thisone.fprints['p993']=fp
                 somekey=True
@@ -344,7 +345,7 @@ else:
                         nogood=False
                     except Exception as e: 
                         #oddly, an NXDOMAIN seems to cause an exception, so these happen
-                        #print >> sys.stderr, "Error making DNS query for " + v + " for ip:" + thisone.ip + " " + str(e)
+                        #print (sys.stderr, "Error making DNS query for " + v + " for ip:" + thisone.ip + " " + str(e))
                         pass
 
             for k in tmp:
@@ -413,6 +414,7 @@ biggestcollider=-1
 clusternum=0
 
 fl=len(fingerprints)
+print(fl)
 for i in range(0,fl):
     r1=fingerprints[i]
     rec1=r1.ip_record
@@ -483,7 +485,7 @@ for i in range(0,fl):
     checkcount += 1
 
     if checkcount % 100 == 0:
-        print >> sys.stderr, "Checking colisions, did: " + str(checkcount) + " found: " + str(colcount) + " remote collisions"
+        print (sys.stderr, "Checking colisions, did: " + str(checkcount) + " found: " + str(colcount) + " remote collisions")
 
     if checkcount % 1000 == 0:
         gc.collect()
@@ -491,12 +493,12 @@ for i in range(0,fl):
 if args.fpfile is None:
     keyf.write(']\n')
     keyf.close()
-
+###########################
 colcount=0
 noncolcount=0
 accumcount=0
 
-# do clustersizes
+# do clusters 
 clustersizes={}
 clustersizes[0]=0
 for f in fingerprints:
@@ -510,21 +512,21 @@ for f in fingerprints:
 
 histogram={}
 clusterf=open("clustersizes.csv","w")
-print >>clusterf, "clusternum,size"
+print(clusterf, "clusternum,size")
 for c in clustersizes:
-    print >> clusterf, str(c) + ", " + str(clustersizes[c])
+    print (clusterf, str(c) + ", " + str(clustersizes[c]))
     if clustersizes[c] in histogram:
         histogram[clustersizes[c]]= histogram[clustersizes[c]]+1
     else:
         histogram[clustersizes[c]]=1
-print >>clusterf, "\n"
-print >>clusterf, "clustersize,#clusters,collider"
+print (clusterf, "\n")
+print (clusterf, "clustersize,#clusters,collider")
 # "collider" is y or n, so we mark the special "no-external collisions cluster" with an "n"
 for h in histogram:
     if h==clustersizes[0]:
-        print >> clusterf, str(h) + "," + str(histogram[h]) + ",n"
+        print (clusterf, str(h) + "," + str(histogram[h]) + ",n")
     else:
-        print >> clusterf, str(h) + "," + str(histogram[h]) + ",y"
+        print (clusterf, str(h) + "," + str(histogram[h]) + ",y")
 del clustersizes
 clusterf.close()
 
@@ -532,6 +534,7 @@ colf=open(outfile, 'w')
 colf.write('[\n')
 firstone=True
 mergedclusternums=[]
+
 try:
     for f in fingerprints:
         if f.nrcs!=0:
@@ -553,7 +556,7 @@ try:
         if accumcount % 100 == 0:
             # exit early for debug purposes
             #break
-            print >> sys.stderr, "Saving collisions, did: " + str(accumcount) + " found: " + str(colcount) + " IP's with remote collisions"
+            print (sys.stderr, "Saving collisions, did: " + str(accumcount) + " found: " + str(colcount) + " IP's with remote collisions")
 except Exception as e: 
     print >> sys.stderr, "Saving exception " + str(e)
 
@@ -565,7 +568,7 @@ mergedclusternum=len(mergedclusternums)
 del fingerprints
 
 
-print >> sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
+print (sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
         "good: " + str(goodcount) + "\n\t" + \
         "bad: " + str(badcount) + "\n\t" + \
         "remote collisions: " + str(colcount) + "\n\t" + \
@@ -573,4 +576,4 @@ print >> sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
         "most collisions: " + str(mostcollisions) + " for record: " + str(biggestcollider) + "\n\t" + \
         "non-merged total clusters: " + str(clusternum) + "\n\t" + \
         "merged total clusters: " + str(mergedclusternum) + "\n\t" + \
-        "Scandate used is: " + str(scandate)
+        "Scandate used is: " + str(scandate))
