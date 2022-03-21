@@ -231,7 +231,7 @@ else:
             #port 110
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p110']['pop3']['data']['results']['tls']['handshake_log']['server_certificates']['certificate']
+                    cert=j_content['p110']['pop3']['data']['result']['tls']['handshake_log']['server_certificates']['certificate']
                     fp=j_content['p110']['data']['pop3']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     get_tls(thisone.writer,'p25',j_content['p110']['data']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
@@ -249,8 +249,8 @@ else:
             #port 143 - will need to re run - no tls info - missing starttls command 
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p143']['data']['tls']['server_certificates']['certificate']
-                    fp=j_content['p143']['data']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    cert=j_content['p143']['imap']['data']['tls']['server_certificates']['certificate']
+                    fp=j_content['p143']['imap']['data']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     get_tls(thisone.writer,'p143',j_content['p143']['data']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
                     cert=j_content['p143']['pop3']['starttls']['tls']['certificate']
@@ -288,9 +288,9 @@ else:
             #port 587 - need to double check data for this - mostlty connection timeout/i-o error
             try:
                 if thisone.writer=="FreshGrab.py":
-                    fp=j_content['p587']['data']['smtp']['results']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    cert=j_content['p587']['data']['smtp']['results']['tls']['handshake_log']['server_certificates']['certificate']
-                    get_tls(thisone.writer,'p587',j_content['p587']['data']['smtp']['results']['tls'],j_content['ip'],thisone.analysis['p587'],scandate)
+                    fp=j_content['p587']['data']['smtp']['result']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    cert=j_content['p587']['data']['smtp']['result']['tls']['handshake_log']['server_certificates']['certificate']
+                    get_tls(thisone.writer,'p587',j_content['p587']['data']['smtp']['result']['tls'],j_content['ip'],thisone.analysis['p587'],scandate)
                     somekey=True
                     get_certnames('p587',cert,nameset)
                     thisone.fprints['p587']=fp
@@ -304,12 +304,12 @@ else:
             #port 993
             try:
                 if thisone.writer=="FreshGrab.py":
-                    fp=j_content['p993']['data']['imap']['results']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    cert=j_content['p993']['data']['imap']['results']['tls']['handshake_log']['server_certificates']['certificate']
+                    fp=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    cert=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']
                     print("P 993: \n")
                     print("Fp is: ", fp)
                     print("cert is:", cert)
-                    get_tls(thisone.writer,'p993',j_content['p993']['data']['imap']['results']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
+                    get_tls(thisone.writer,'p993',j_content['p993']['data']['imap']['result']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
                 #else:
                     #fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     #cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
