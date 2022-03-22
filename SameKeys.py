@@ -1,6 +1,7 @@
 #!/usr/bin/python3
+#
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
-# 
+#  
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -20,6 +21,13 @@
 # THE SOFTWARE.
 #
 # check who's re-using the same keys 
+# this script takes in the output from zgrab2 i.e. records.fresh
+# it will use a class instance per ip to store differnet informations we needd to store
+# it will start out by creating a json structure for each line in the abobve line
+# it will then store info like ip, asn info if there otherwise it will use the mmdb funcs
+# Then for each port we the ip will go through try and catch statements for eahc port and store
+# info like fingerprints and certs in the data
+# each ip is also looked up and comapred using reverse dns to make sure it matches.
 
 import os, sys, argparse, tempfile, gc, re
 import json
@@ -158,6 +166,7 @@ else:
     
             thisone.analysis['nameset']={}
             nameset=thisone.analysis['nameset']
+
             print("\nDoing analysis for ip: ", thisone.ip)
             try:
                 # getting name from reverse DNS
@@ -584,7 +593,6 @@ colf.close()
 mergedclusternum=len(mergedclusternums)
 
 del fingerprints
-
 
 print (sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
         "good: " + str(goodcount) + "\n\t" + \

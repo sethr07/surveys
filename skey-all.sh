@@ -20,10 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-#set -x
+# set -x
 #
-# Script that does all. Top level script. 
-########################
+# Script that does all. Top level script.
+# Source Directory is from the code files will be runs.
+# Resuts Directory is where the results from scans,grab,mm collisions, graphs will be stored
+# Incase you want to continue a process use the pdir option. If there are files that match it will 
+# automatically skip the steps which are done.
+# Country is the country code you want to do the scans for
+# ipsrc is used when you already have a list of ips and do not need maxmind
+# zmap port is the port you will scan before the grab stage. Def = 25
+# Incase you want to skip a stage use -k. 
+#
+
 function whenisitagain()
 {
 	date -u +%Y%m%d-%H%M%S
@@ -380,7 +389,7 @@ then
 else
 	echo "Clustering records" 
 	echo "Clustering records" >>$logf 
-	# this takes a few minutes at least
+	# this will take a some times - a couple of hours
 	$srcdir/SameKeys.py -i $TELLTALE_FRESH -o $TELLTALE_CLUSTER -c $country >>$logf 2>&1 
 	if [ "$?" != "0" ]
 	then
@@ -398,7 +407,7 @@ then
 else
 	echo "Graphing records" 
 	echo "Graphing records" >>$logf 
-	# this takes a few minutes at least
+	# this will take a some times - a couple of hours
 	# with legend
 	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -l -o . -g -c $country >>$logf 2>&1 
 	# without legend

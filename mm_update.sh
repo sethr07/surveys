@@ -27,8 +27,7 @@
 #installs country codes
 #Calls python script for creating GeoIPWHoisCountry.csv
 
-#DESTDIR=$HOME/code/surveys/mmdb
-
+echo "Setting up MaxMind API"
 CURRDIR=$HOME/code/surveys
 dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{print $2}' | sed -e 's/\/$//'`
 DESTDIR=$HOME/$dpath
@@ -101,7 +100,7 @@ fname2="GeoLite2-Country-Locations-en.csv"
 cp $dirname/$fname1 $DESTDIR/$fname1
 cp $dirname/$fname2 $DESTDIR/$fname2
 
-echo "creating csv file of ips country wise"
+echo "Creating csv file of ips country wise"
 $CURRDIR/MMCreateGeoIP.py
-echo "MMDB Done"
+echo "MMDB Setup Done."
 

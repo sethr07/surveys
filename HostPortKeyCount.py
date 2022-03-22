@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -26,6 +26,7 @@
 # TODO: fix this to work with fingerprints.json as well as all-key-fingerprints.json
 # but the latter is good enough!
 
+from asyncore import write
 import sys
 import os
 import tempfile
@@ -51,7 +52,7 @@ args=parser.parse_args()
 
 # if this then just print legend
 if args.fname is None:
-    print args
+    print (args)
     sys.exit(0)
 
 # main line processing ...
@@ -77,7 +78,7 @@ while f:
     # print something now and then to keep operator amused
     checkcount += 1
     if checkcount % 100 == 0:
-        print >> sys.stderr, "Counting hosts/ports/keys, did: " + str(hosts) 
+        print (sys.stderr, "Counting hosts/ports/keys, did: " + str(hosts))
     if checkcount % 1000 == 0:
         gc.collect()
 
@@ -89,12 +90,12 @@ while f:
 fp.close()
 
 summary_fp=open("hpk_summary.txt","a+")
-print >> summary_fp, "hosts: " + str(hosts) + "\n" + \
+summary_fp.write("hosts: " + str(hosts) + "\n" + \
         "hostsports: " + str(hostsports) + "\n" + \
-        "fps: " + str(len(fps_seen)) 
+        "fps: " + str(len(fps_seen)))
 summary_fp.close()
 
-print >> sys.stderr, "hosts: " + str(hosts) + "\n" + \
+print  (sys.stderr, "hosts: " + str(hosts) + "\n" + \
         "hostsports: " + str(hostsports) + "\n" + \
-        "fps: " + str(len(fps_seen)) 
+        "fps: " + str(len(fps_seen)))
 

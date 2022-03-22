@@ -21,11 +21,11 @@
 # this script will install the various bits'n'pieces needed to get this
 # survey stuff working
 # installs all python modules required
-# installs zmap
+# installs zmap2
 # isntalls go 1.15.5 for zgrab2
 # installs zgrab2
 # runs mm_update script which makes the mmdb dir and builds the required databases
-# Also sets gopath for go to work
+# Also sets gopath for golang to work
 
 # Last tested on 18.04 - 2022/03
 

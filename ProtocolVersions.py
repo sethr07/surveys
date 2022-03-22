@@ -1,5 +1,5 @@
-#!/usr/bin/python
-
+#!/usr/bin/python3
+#
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,9 +19,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+#
 # check the protocol versions being used 
-
+#
 # This goes back to records.fresh as I don't keep the versioning info
 # in the fingerprint structure (TODO: add version stuff to metadata
 # in FP structures)
@@ -74,10 +74,10 @@ def counterupdate(inout,pstr,ver):
 
 # figure out runname
 dirname=os.getcwd()
-#print dirname
+print (dirname)
 fullrunname=dirname.split('/')[-1]
-runname=fullrunname.split('-')[0] + '-' + fullrunname.split('-')[1] 
-print >>sys.stderr, "Doing " + runname
+#runname=fullrunname.split('-')[0] + '-' + fullrunname.split('-')[1] 
+#print (sys.stderr, "Doing " + runname)
 
 # default values
 infile="records.fresh"
@@ -126,14 +126,15 @@ df = open(dodgyfile,"r")
 for line in df:
     if re.search('^    "ip"', line):
         thatip=line.split()[1][1:-2]
+        print(thatip)
         dodgycount+=1
         if dodgycount % 100 == 0:
-            print >>sys.stderr, "Reading dodgies, did: " + str(dodgycount)
+            print (sys.stderr, "Reading dodgies, did: " + str(dodgycount))
     if re.search('"wrong_country"',line):
         ooccount+=1
         oocips.append(thatip)
-print >>sys.stderr, "Done reading dodgies, did: " + str(dodgycount)
-print >>sys.stderr, "Number of ooc IPs: " + str(len(oocips))
+print (sys.stderr, "Done reading dodgies, did: " + str(dodgycount))
+print (sys.stderr, "Number of ooc IPs: " + str(len(oocips)))
 
 cf = open(collfile,"r")
 fp=getnextfprint(cf)
@@ -142,10 +143,10 @@ while fp:
     clusterips.append(fp.ip)
     clcount+=1
     if clcount % 100 == 0:
-        print >>sys.stderr, "Reading cluster IPs, did: " + str(clcount)
+        print (sys.stderr, "Reading cluster IPs, did: " + str(clcount))
     fp=getnextfprint(cf)
 cf.close()
-print >>sys.stderr, "Number of non-cluster IPs: " + str(len(clusterips))
+print (sys.stderr, "Number of non-cluster IPs: " + str(len(clusterips)))
 
 # encoder options
 jsonpickle.set_encoder_options('json', sort_keys=True, indent=2)
@@ -186,7 +187,7 @@ with open(infile,'r') as f:
 
             # ignore if not in-country
             if thisip in oocips:
-                print >>sys.stderr, "IP : " + thisip + " is out of country"
+                print (sys.stderr, "IP : " + thisip + " is out of country")
                 continue
 
             incluster=False
@@ -197,23 +198,24 @@ with open(infile,'r') as f:
             for pstr in portstrings:
                 if pstr=='p22':
                     try:
-                        sshver=j_content['p22']['data']['xssh']['server_id']['version']
+                        sshver=j_content['p22']['data']['ssh']['result']['server_id']['version']
+                        print(sshver)
                         # make sure we got an FP for that - sometimes we get protocol versions
                         # but don't get an FP, which skews the numbers. That can happen
                         # e.g. if something doesn't decode or whatever
                         # attempting to get this should cause an exception if it's not there
                         try:
-                            fp=j_content['p22']['data']['xssh']['key_exchange']['server_host_key']['fingerprint_sha256'] 
-                            #print >>sys.stderr, "IP2 : " + thisip + " incluster: " + str(incluster) 
+                            fp=j_content['p22']['data']['ssh']['result']['key_exchange']['server_host_key']['fingerprint_sha256'] 
+                            print(sys.stderr, "IP2 : " + thisip + " incluster: " + str(incluster))
                             counterupdate(incluster,'p22',sshver)
                             somekey=True
                             if sshver not in sshversions:
                                 sshversions.append(sshver)
                         except Exception as e: 
                             sshfpes+=1
-                            #print >> sys.stderr, "p22 ver/FP exception #" + str(sshfpes) + " " + str(e) + " ip:" + thisip
+                            print (sys.stderr, "p22 ver/FP exception #" + str(sshfpes) + " " + str(e) + " ip:" + thisip)
                     except Exception as e: 
-                        #print >> sys.stderr, "p22 exception " + str(e) + " ip:" + thisone.ip
+                        print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisip)
                         pass
                 elif pstr=='p443':
                     try:
@@ -270,27 +272,27 @@ with open(infile,'r') as f:
             thistime=ipend-ipstart
             peripaverage=((overallcount*peripaverage)+thistime)/(overallcount+1)
             if overallcount % 100 == 0:
-                print >> sys.stderr, "Reading versions, did: " + str(overallcount) + \
+                print (sys.stderr, "Reading versions, did: " + str(overallcount) + \
                         " number with keys " + str(somekeycount) + \
                         " ssh FP exceptions: " + str(sshfpes) + \
                         " tls FP exceptions: " + str(tlsfpes) + \
                         " most recent ip " + thisip + \
                         " average time/ip: " + str(peripaverage) \
-                        + " last time: " + str(thistime)
+                        + " last time: " + str(thistime))
             del j_content
 
     f.close()
     gc.collect()
-    print >> sys.stderr, "Done reading versions, did: " + str(overallcount) + \
+    print (sys.stderr, "Done reading versions, did: " + str(overallcount) + \
                         " number with keys " + str(somekeycount) + \
                         " ssh FP exceptions: " + str(sshfpes) + \
                         " tls FP exceptions: " + str(tlsfpes) + \
                         " most recent ip " + thisip + \
                         " average time/ip: " + str(peripaverage) \
-                        + " last time: " + str(thistime)
+                        + " last time: " + str(thistime))
 
 bstr=jsonpickle.encode(counters)
-print >>sys.stderr, "Counters:\n" + bstr
+print (sys.stderr, "Counters:\n" + bstr)
 
 ocounters={}
 
@@ -306,15 +308,16 @@ for pstr in portstrings:
                 ocounters[ver]=ocounters[ver]+counters['o'][pstr][ver]
 
 bstr=jsonpickle.encode(ocounters)
-print >>sys.stderr, "Overall TLS Counters:\n" + bstr
+print (sys.stderr, "Overall TLS Counters:\n" + bstr)
 
 # produce some latex table entry lines, for tls
 eotl=' \\\\ \\hline'
-print runname + eotl
+#print (runname + eotl)
+print (eotl)
 lineout= 'port ' 
 for ver in sorted(tlsversions):
     lineout+= ' & ' + ver
-print lineout + ' & Total ' + eotl
+print (lineout + ' & Total ' + eotl)
 coltotal=0
 for pstr in portstrings:
     if pstr=='p22':
@@ -328,7 +331,7 @@ for pstr in portstrings:
             lineout+= ' & ' + str(counters['o'][pstr][ver])
             linetotal+= counters['o'][pstr][ver]
 
-    print lineout + ' & ' + str(linetotal) + eotl
+    print (lineout + ' & ' + str(linetotal) + eotl)
     coltotal+=linetotal
 lineout='Total ' 
 linetotal=0
@@ -336,6 +339,6 @@ for ver in sorted(tlsversions):
     lineout+= ' & ' + str(ocounters[ver]) 
     linetotal += ocounters[ver]
 if linetotal != coltotal:
-    print >>sys.stderr, "Totals mismatch!!!, cols (" + str(coltotal) + ") != last line (" + str(linetotal) + ")"
-print lineout + ' & ' + str(linetotal) + eotl
+    print (sys.stderr, "Totals mismatch!!!, cols (" + str(coltotal) + ") != last line (" + str(linetotal) + ")")
+print (lineout + ' & ' + str(linetotal) + eotl)
 
