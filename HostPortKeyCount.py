@@ -69,10 +69,11 @@ fp=open(args.fname,"r")
 f=getnextfprint(fp)
 while f:
     fps=f.fprints
+    #print(fps)
     hosts += 1
     for port in fps:
         hostsports += 1
-        #print fps[port]
+        #print (fps[port])
         fps_seen.add(fps[port])
 
     # print something now and then to keep operator amused

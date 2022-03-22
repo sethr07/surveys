@@ -206,7 +206,28 @@ else:
                     nameset['banner']=banner_fqdn
             except Exception as e: 
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
-                nameset['banner']=''    
+                nameset['banner']=''  
+
+            # port 25 - get key
+            try:
+                if thisone.writer=="FreshGrab.py":
+                    #zgrab2 output
+                    tls=j_content['p25']['smtp']['data']['tls']['handshake_log']
+                    cert=tls['server_certificates']['certificate']
+                else:
+                    # not sure about this ->
+                    tls=j_content['p25']['smtp']['starttls']['tls']
+                    cert=tls['certificate']
+                    
+                fp=cert['parsed']['subject_key_info']['fingerprint_sha256'] 
+                get_tls(thisone.writer,'p25',tls,j_content['ip'],thisone.analysis['p25'],scandate)
+                get_certnames('p25',cert,nameset)
+                
+                thisone.fprints['p25']=fp
+                somekey=True
+            except Exception as e: 
+                print (sys.stderr, "p25 exception for:" + thisone.ip + ":" + str(e))
+                pass  
 
             #port 22 -ssh - tested ok
             try:
