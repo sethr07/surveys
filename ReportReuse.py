@@ -345,8 +345,11 @@ while f:
         if clipsdone[cnum] == csize:
             try:
                 repf=open("cluster"+str(cnum)+".json","w")
-                print >>repf, creps[cnum]
-                print >>repf, "\n]\n"
+                repf.write(creps[cnum])
+                nl="\n]\n"
+                repf.write(nl)
+                print (repf, creps[cnum])
+                print (repf, "\n]\n")
                 repf.close()
                 del creps[cnum]
                 clipsdone[cnum] = -1
@@ -356,11 +359,11 @@ while f:
 
             rv=rendergraph(cnum,gvgraph,dynleg,args.legend,outdir,dorendergraph)
             if rv:
-                #print "Rendered graph for cluster " + str(cnum)
+                print ("Rendered graph for cluster " + str(cnum))
                 del grr[cnum]
             else:
                 notrendered.append(cnum)
-                print >>sys.stderr, "Failed to graph cluster " + str(cnum)
+                print (sys.stderr, "Failed to graph cluster " + str(cnum))
     else:
         clipsdone[cnum] = 1
 
