@@ -1,4 +1,5 @@
-# 
+#!/usr/bin/python3
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -18,7 +19,7 @@
 # THE SOFTWARE.
 # grab just the IPs from a censys file 
 # or any other with one json structure per line and an 'ip' key in that dict
-
+#
 import os, sys, argparse, gc
 import json
 
