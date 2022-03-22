@@ -18,7 +18,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+#
 # check who's re-using the same keys 
 
 import os, sys, argparse, tempfile, gc, re
@@ -29,9 +29,10 @@ from dateutil import parser as dparser  # for parsing time from comand line and 
 import pytz # for adding back TZ info to allow comparisons
 from SurveyFuncs import *
 
-# default values
-indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
-infile=indir+"records.fresh"
+#default values
+#indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
+#infile=indir+"records.fresh"
+infile="records.fresh"
 outfile="collisions.json"
 
 # command line arg handling 
@@ -197,7 +198,7 @@ else:
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''    
 
-            #port 22 -ssh
+            #port 22 -ssh - tested ok
             try:
                 if thisone.writer=="FreshGrab.py":
                     #maxmind results
@@ -246,7 +247,7 @@ else:
                 print(sys.stderr, "p110 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 143 - will need to re run - no tls info - missing starttls command 
+            #port 143 - imap: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
                     cert=j_content['p143']['imap']['data']['tls']['server_certificates']['certificate']
@@ -263,7 +264,7 @@ else:
                 print (sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 443 - https
+            #port 443 - https - tested ok
             try:
                 if thisone.writer=="FreshGrab.py":
                     fp=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
@@ -300,7 +301,7 @@ else:
                 print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 993 - imaps
+            #port 993 - imaps - tested ok
             try:
                 if thisone.writer=="FreshGrab.py":
                     fp=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 

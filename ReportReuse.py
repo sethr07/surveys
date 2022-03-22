@@ -1,5 +1,5 @@
-#!/usr/bin/python3.9
-
+#!/usr/bin/python3
+#
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+#
 # Report the collisions, via graphs and text
 
 import sys
@@ -31,26 +31,19 @@ import argparse
 import time, datetime
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
-
 from pympler import asizeof
-
 from SurveyFuncs import *
-
 # install via  "$ sudo pip install -U jsonpickle"
 import jsonpickle
-
 # direct to graphviz ...
 import graphviz as gv
 
 # if > this number of nodes we simplify graphing by not making edges
 # for specific ports, but just mail,web,ssh etc.
 toobiggraph=10
-
-# deffault output directory
+# default output directory
 outdir="graphs"
-
 # graph rendering func
-
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
     #print "Graphing cluster: " + str(cnum)
     # optional legend...
@@ -82,7 +75,6 @@ def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
         print (sys.stderr, "Exception: " + str(e))
         print (sys.stderr, "Maybe you got bored and killed a process?")
         return False
-
 
 # command line arg handling 
 parser=argparse.ArgumentParser(description='Graph the collisions found by SameKeys.py')
