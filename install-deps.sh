@@ -37,6 +37,8 @@ sudo apt-get -y install git unzip
 
 sudo apt-get -y install python3-pip
 sudo -H pip3 install pandas netaddr jsonpickle
+sudo -H pip3 install geoip2
+
 
 if [ ! -d $HOME/code ]
 then

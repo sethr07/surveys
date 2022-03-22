@@ -197,7 +197,7 @@ else:
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''    
 
-            #port 22
+            #port 22 -ssh
             try:
                 if thisone.writer=="FreshGrab.py":
                     #maxmind results
@@ -228,7 +228,7 @@ else:
                 print(sys.stderr, "p22 exception  for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 110
+            #port 110 - pop3: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
                     cert=j_content['p110']['pop3']['data']['result']['tls']['handshake_log']['server_certificates']['certificate']
@@ -263,7 +263,7 @@ else:
                 print (sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 443
+            #port 443 - https
             try:
                 if thisone.writer=="FreshGrab.py":
                     fp=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
@@ -277,8 +277,7 @@ else:
                     fp=j_content['p443']['https']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     cert=j_content['p443']['https']['tls']['certificate']
                     #get_tls(thisone.writer,'p443',j_content['p443']['https']['tls'],j_content['ip'],thisone.analysis['p443'],scandate)
-
-                #get_certnames('p443',cert,nameset)
+                get_certnames('p443',cert,nameset)
                 thisone.fprints['p443']=fp
                 somekey=True
             except Exception as e: 
@@ -301,19 +300,19 @@ else:
                 print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 993
+            #port 993 - imaps
             try:
                 if thisone.writer=="FreshGrab.py":
                     fp=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     cert=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']
-                    print("P 993: \n")
-                    print("Fp is: ", fp)
-                    print("cert is:", cert)
+                    #print("P 993: \n")
+                    #print("Fp is: ", fp)
+                    #print("cert is:", cert)
                     get_tls(thisone.writer,'p993',j_content['p993']['data']['imap']['result']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
-                #else:
-                    #fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
-                    #cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
-                    #get_tls(thisone.writer,'p993',j_content['p993']['imaps']['tls']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
+                else:
+                    fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
+                    cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
+                    get_tls(thisone.writer,'p993',j_content['p993']['imaps']['tls']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
                 get_certnames('p993',cert,nameset)
                 thisone.fprints['p993']=fp
                 somekey=True
@@ -325,8 +324,8 @@ else:
             besty=[]
             nogood=True # assume none are good
             tmp={}
-            # try verify names a bit
-            #print("Printing nameste?")
+            #try verify names a bit
+            #print("Printing nameset?")
             #print(nameset)
             for k in nameset:
                 v=nameset[k]
@@ -345,7 +344,7 @@ else:
                         nogood=False
                     except Exception as e: 
                         #oddly, an NXDOMAIN seems to cause an exception, so these happen
-                        #print (sys.stderr, "Error making DNS query for " + v + " for ip:" + thisone.ip + " " + str(e))
+                        print (sys.stderr, "Error making DNS query for " + v + " for ip:" + thisone.ip + " " + str(e))
                         pass
 
             for k in tmp:
@@ -399,14 +398,18 @@ else:
     keyf=open('all-key-fingerprints.json', 'w')
     keyf.write("[\n")
 
-
-
+###WORKS FINE UNTIL HERE##
+##section below works good but i need to verify the output to make sure. not understand it fully right now.
+###########################
+# might split this section into another file
+# it takes hella long to debug then
+# Tho, for now p443, p993, p22 outputs are good, rest we need to scan again.
+# might be better to get a fresh scan 
 
 # do clusters 
 # end of fpfile is not None
 checkcount=0
 colcount=0
-
 mostcollisions=0
 biggestcollider=-1
 
@@ -414,18 +417,18 @@ biggestcollider=-1
 clusternum=0
 
 fl=len(fingerprints)
-print(fl)
+print("total fingerprints: ", fl)
 for i in range(0,fl):
-    r1=fingerprints[i]
+    r1=fingerprints[i] #first rec
+    print(r1)
     rec1=r1.ip_record
     for j in range (i+1,fl):
-        r2=fingerprints[j]
+        r2=fingerprints[j] #next rec
         rec2=r2.ip_record
         r1r2coll=False # so we remember if there was one
         for k1 in r1.fprints:
             for k2 in r2.fprints:
                 if r1.fprints[k1]==r2.fprints[k2]:
-
                     if r1.clusternum==0 and r2.clusternum==0:
                         clusternum += 1
                         r1.clusternum=clusternum
@@ -493,7 +496,8 @@ for i in range(0,fl):
 if args.fpfile is None:
     keyf.write(']\n')
     keyf.close()
-###########################
+
+
 colcount=0
 noncolcount=0
 accumcount=0
@@ -512,20 +516,32 @@ for f in fingerprints:
 
 histogram={}
 clusterf=open("clustersizes.csv","w")
+cw = csv.writer(clusterf, lineterminator='\n')
 print(clusterf, "clusternum,size")
+csize_headers = ["clusternum", "size"]
+cw.writerow(csize_headers)
 for c in clustersizes:
     print (clusterf, str(c) + ", " + str(clustersizes[c]))
+    csize=clustersizes[c]
+    data = [c, csize]
+    cw.writerow(data)
     if clustersizes[c] in histogram:
         histogram[clustersizes[c]]= histogram[clustersizes[c]]+1
     else:
         histogram[clustersizes[c]]=1
-print (clusterf, "\n")
+#print (clusterf, "\n")
 print (clusterf, "clustersize,#clusters,collider")
+csize_headers2 = ["clustersize,#clusters,collider"]
+cw.writerow(csize_headers2)
 # "collider" is y or n, so we mark the special "no-external collisions cluster" with an "n"
 for h in histogram:
     if h==clustersizes[0]:
+        data = [h, histogram[h], "n"]
+        cw.writerow(data)
         print (clusterf, str(h) + "," + str(histogram[h]) + ",n")
     else:
+        data = [h, histogram[h], "y"]
+        cw.writerow(data)
         print (clusterf, str(h) + "," + str(histogram[h]) + ",y")
 del clustersizes
 clusterf.close()
@@ -558,7 +574,7 @@ try:
             #break
             print (sys.stderr, "Saving collisions, did: " + str(accumcount) + " found: " + str(colcount) + " IP's with remote collisions")
 except Exception as e: 
-    print >> sys.stderr, "Saving exception " + str(e)
+    print (sys.stderr, "Saving exception " + str(e))
 
 # this gets crapped on each time (for now)
 colf.write('\n]\n')

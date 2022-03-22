@@ -267,15 +267,15 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
         if writer == 'FreshGrab.py':
             # local
             tlsdets['cipher_suite']=tls['handshake_log']['server_hello']['cipher_suite']['value'] # some int value
-            print(tlsdets['cipher_suite'])
+            #print(tlsdets['cipher_suite'])
             tlsdets['browser_trusted']=tls['handshake_log']['server_certificates']['validation']['browser_trusted'] # true or false
-            print(tlsdets['browser_trusted'])
+            #print(tlsdets['browser_trusted'])
             tlsdets['self_signed']=tls['handshake_log']['server_certificates']['certificate']['parsed']['signature']['self_signed'] #true or false
-            print(tlsdets['self_signed'])
+            #print(tlsdets['self_signed'])
             notbefore=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['start']) # start date
-            print(notbefore)
+            #print(notbefore)
             notafter=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['end']) # end date
-            print(notafter)
+            #print(notafter)
             try:
                 spki=tls['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']
                 if spki['key_algorithm']['name']=='RSA':
@@ -361,7 +361,7 @@ def get_certnames(portstring,cert,nameset):
         # we ignore all non dns_names - there are very few in our data (maybe 145 / 12000)
         # and they're mostly otherName with opaque OID/value so not that useful. (A few
         # are emails but we'll skip 'em for now)
-        #print "FQDN san " + str(san_fqdns) 
+        print ("FQDN san " + str(san_fqdns)) 
         sancount=0
         for san in san_fqdns:
             nameset[portstring+'san'+str(sancount)]=san_fqdns[sancount]
@@ -378,8 +378,6 @@ def get_certnames(portstring,cert,nameset):
         #print (sys.stderr, "FQDN san exception " + str(e) + " for record:" + str(count))
         pass
     return
-
-
 ##########################
 
 ###########################
