@@ -160,9 +160,10 @@ else:
             nameset=thisone.analysis['nameset']
             print("\nDoing analysis for ip: ", thisone.ip)
             try:
-                # name from reverse DNS
+                # getting name from reverse DNS
                 rdnsrec=socket.gethostbyaddr(thisone.ip)
                 #print(rdnsrec)
+                # name is first element in list
                 rdns=rdnsrec[0]
                 #print ("FQDN reverse: " + str(rdns))
                 nameset['rdns']=rdns
@@ -190,7 +191,7 @@ else:
                     nameset['banner']=banner_fqdn
                 #need to work this out ->    
                 elif ts[0].startswith("220-"):
-                    print("Startws with fqdn: \n")
+                    print("Starts with fqdn: \n")
                     banner_fqdn=ts[0][4:]
                     print(banner_fqdn)
                     nameset['banner']=banner_fqdn
@@ -330,8 +331,8 @@ else:
             #print(nameset)
             for k in nameset:
                 v=nameset[k]
-                #print("Printing V: ", v)
-                #print "checking: " + k + " " + v
+                print("Printing V: ", v)
+                print("checking: " + k + " " + v)
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
                     try:
