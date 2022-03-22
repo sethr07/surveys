@@ -30,6 +30,7 @@ import os, sys, socket
 import geoip2.database
 import ipaddress
 from dateutil import parser as dparser 
+import graphviz as gv
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -80,13 +81,226 @@ CERTTYPE_OTHER=5            # oddbballs, don't expect any
 # many at most
 MAXSAN=100
 
+
 portstrings=['p22','p25','p110','p143','p443','p587','p993']
 
 def printOneFP(f):
     print (jsonpickle.encode(f))
 
+#############################3
+#graphing stuff
+the_engine='sfdp'
+the_format='svg'
+
+# this is manually made symmetric around the diagonal
+# variant - make all the mail colours the same
+merged_nportscols=[ \
+        'black',     'bisque', 'yellow', 'aquamarine','darkgray',    'chocolate',    'magenta', \
+        'bisque',    'blue',   'blue',   'blue',      'violet',      'blue',         'blue', \
+        'yellow',    'blue',   'blue',   'blue',      'coral',       'blue',         'blue', \
+        'aquamarine','blue',   'blue',   'blue',      'darkkhaki',   'blue',         'blue', \
+        'darkgray',  'violet', 'coral',  'darkkhaki', 'orange',      'darkseagreen', 'blue', \
+        'turquoise', 'blue',   'blue',   'blue',      'blue',        'blue',         'blue',
+        'magenta',   'blue',   'blue',   'blue',      'darkseagreen','blue',         'blue', ] 
+
+# new way - individual colours per port-pair  - this is manually made symmetric around the diagonal
+unmerged_nportscols=[ \
+        'black',     'bisque',        'yellow',          'aquamarine', 'darkgray',     'turquoise',      'magenta', \
+        'bisque',    'blue',          'blanchedalmond',  'crimson',    'violet',       'wheat',          'brown', \
+        'yellow',    'blanchedalmond','chartreuse',      'cyan',       'coral',        'yellowgreen',    'darkred', \
+        'aquamarine','crimson',       'cyan',            'darkblue',   'darkkhaki',    'chocolate',      'darksalmon', \
+        'darkgray',  'violet',        'coral',           'darkkhaki',  'orange',       'cornsilk',       'darkseagreen', \
+        'turquoise', 'wheat',         'yellowgreen',     'chocolate',  'cornsilk',     'deeppink',       'deepskyblue', \
+        'magenta',   'brown',         'darkred',         'darksalmon', 'darkseagreen', 'deepskyblue',    'maroon', \
+        ]
+
+# pick one of these - the first merges many mail port combos
+# leading to clearer graphs, the 2nd keeps all the details
+# nportscols=merged_nportscols
+nportscols=unmerged_nportscols
+
+# colours - return a list of logical-Or of port-specific colour settings
+def mask2colours(mask, colours, dynleg):
+    intmask=int(mask,16)
+    portcount=len(portstrings)
+    for i in range(0,portcount):
+        for j in range(0,portcount):
+            cmpmask = (1<<(j+8*i)) 
+            if intmask & cmpmask:
+                cnum=i*len(portstrings)+j
+                colcode=nportscols[cnum]
+                if colcode not in colours:
+                    colours.append(colcode)
+                    if i>j:
+                        dynleg.add(portstrings[i]+"-"+portstrings[j]+" "+colcode)
+                    else:
+                        dynleg.add(portstrings[j]+"-"+portstrings[i]+" "+colcode)
+
+def mask2fewercolours(mask, colours, dynleg):
+    intmask=int(mask,16)
+    portcount=len(portstrings)
+    for i in range(0,portcount):
+        for j in range(0,portcount):
+            cmpmask = (1<<(j+8*i)) 
+            if intmask & cmpmask:
+                cnum=i*len(portstrings)+j
+                colcode=merged_nportscols[cnum]
+                if colcode not in colours:
+                    colours.append(colcode)
+                    # recall i and j index this: portstrings=['p22','p25','p110','p143','p443','p587','p993']
+                    if i==0 and j==0:
+                        dynleg.add("ssh"+" "+colcode)
+                    elif i==4 and j==4:
+                        dynleg.add("web"+" "+colcode)
+                    elif (i==1 or i==2 or i==3 or i==5 or i==6) and (j==1 or j==2 or j==3 or j==5 or j==6):
+                        dynleg.add("mail"+" "+colcode)
+                    elif i>j:
+                        dynleg.add(portstrings[i]+"-"+portstrings[j]+" "+colcode)
+                    else:
+                        dynleg.add(portstrings[j]+"-"+portstrings[i]+" "+colcode)
+
+def printlegend():
+    # make a fake graph with nodes for each port and coloured edges
+    leg=gv.Graph(format=the_format,engine='neato',name="legend")
+    leg.attr('graph',splines='true')
+    leg.attr('graph',overlap='false')
+    leg.attr('edge',overlap='false')
+    portcount=len(portstrings)
+    c=0
+    for i in range(0,portcount):
+        for j in range(0,portcount):
+            cnum=i*len(portstrings)+j
+            colcode=nportscols[cnum]
+            portpair = portstrings[i] + "-" + portstrings[j] 
+            leg.edge(portstrings[i],portstrings[j],color=colcode)
+    leg.render("legend.dot")
+
+def asn2colour(asn):
+    asni=int(asn)
+    if asni==0:
+        return '#A5A5A5'
+    else:
+        return '#' + "%06X" % (asni&0xffffff)
+
+def ip2int(ip):
+    sip=ip.split(".")
+    sip=list(map(int,sip))
+    iip=sip[0]*256**3+sip[1]*256**2+sip[2]*256+sip[3]
+    del sip
+    return iip
+
+def edgename(ip1,ip2):
+    # string form consumes more memory
+    #return ip1+"|"+ip2
+    int1=ip2int(ip1)
+    int2=ip2int(ip2)
+    int3=int2*2**32+int1
+    del int1
+    del int2
+    return int3
 
 
+#############################
+def file_in_mem(fname):
+    if len(giantbuffer)==0: 
+        #print "Not loaded"
+        return False
+    else:
+        #print "Loaded"
+        return True
+
+def load_file_to_mem(fname):
+    global giantbuffer
+    print (sys.stderr, "Reading " + fname + " into RAM")
+    fp=open(fname)
+    giantbuffer=fp.read()
+    fp.close()
+    print >>sys.stderr, "Done reading " + fname + " into RAM"
+    print(len(giantbuffer))
+
+def readline_mem():
+    global offset
+    start_offset=offset
+    if offset >= len(giantbuffer):
+        print (sys.stderr, "Offset "+str(offset)+" >= "+str(len(giantbuffer))+"!")
+        return ""
+    while giantbuffer[offset]!='\n':
+        offset += 1
+    #print "|"+giantbuffer[start_offset:offset]+"|"
+    offset+=1
+    return giantbuffer[start_offset:offset]
+    
+def getnextfprint_mem(fname):
+    # as above, but first read entire file into memory and 
+    # handle it there
+    # read the next fingerprint from the file pointer
+    # fprint is a json structure, pretty-printed, so we'll
+    # read to the first line that's just an "{" until
+    # the next line that's just a "}"
+    # or...
+    # sometimes we might get one fp structure per line
+    # surrounded with a '[' at the top and a ']' at
+    # the end, in that case fps are separated with a 
+    # line containing a single comma, i.e. ",\n"
+    # the first thing on fp lines in such cases is
+    # '{"fprints":' so we'll take such a line as holding
+    # an entire json fp
+
+    if not file_in_mem(fname):
+        load_file_to_mem(fname)
+
+    magicfpstrs= ['{"fprints":', \
+                    '{"py/object": "SurveyFuncs.OneFP", "fprints":' ]
+    line=readline_mem()
+    indented=False
+    while line:
+        #print "preline:", line
+        if line=="{\n":
+            break
+        if line=="  {\n":
+            indented=True
+            break
+        if re.match("\s*{\s*",line) is not None:
+            break
+        for ms in magicfpstrs:
+            if line.startswith(ms):
+                #print ms
+                foo=line.strip()
+                if foo.endswith("},"):
+                    #print "stripping"
+                    foo=foo[:-1]
+                #print foo.strip()
+                jthing=json.loads(foo.strip())
+                onething=j2o(jthing)
+                del jthing
+                return onething
+        line=readline_mem()
+    jstr=""
+    while line:
+        #print "postline:", line
+        jstr += line
+        if not indented and line=="}\n": 
+            break
+        # note - indented version here is due to other tooling, not v. predictable 
+        # and it has an extra space after the closing brace for some reason
+        if indented and (line=="  } \n" or line=="  }\n"  or  line=="  } \n"): 
+            break
+        if (not indented and line=="},\n") or (indented and line=="  }, \n"):
+            # same as above but take away the "," at the end
+            #print "|"+jstr[-10:]+"|"
+            jstr=jstr.strip()
+            jstr=jstr.strip(',')
+            #print "|"+jstr[-10:]+"|"
+            break
+        line=readline_mem()
+    if line:
+        #print jstr
+        jthing=json.loads(jstr)
+        onething=j2o(jthing)
+        del jthing
+        return onething
+    else:
+        return line
 #functions to make clusters
 
 #reutrns the port string depeing on the index. - tested ok
