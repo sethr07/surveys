@@ -22,7 +22,7 @@
 #
 # check who's re-using the same keys 
 # this script takes in the output from zgrab2 i.e. records.fresh
-# it will use a class instance per ip to store differnet informations we needd to store
+# it will use a class instance per ip to store differnet informations we need to store
 # it will start out by creating a json structure for each line in the abobve line
 # it will then store info like ip, asn info if there otherwise it will use the mmdb funcs
 # Then for each port we the ip will go through try and catch statements for eahc port and store

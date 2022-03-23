@@ -126,7 +126,8 @@ df = open(dodgyfile,"r")
 for line in df:
     if re.search('^    "ip"', line):
         thatip=line.split()[1][1:-2]
-        print(thatip)
+        print("IP: ", thatip)
+        print("\n")
         dodgycount+=1
         if dodgycount % 100 == 0:
             print (sys.stderr, "Reading dodgies, did: " + str(dodgycount))
@@ -193,7 +194,7 @@ with open(infile,'r') as f:
             incluster=False
             if thisip in clusterips:
                 incluster=True
-            #print >>sys.stderr, "IP : " + thisip + " incluster: " + str(incluster) 
+            print (sys.stderr, "IP : " + thisip + " incluster: " + str(incluster))
 
             for pstr in portstrings:
                 if pstr=='p22':
@@ -219,7 +220,7 @@ with open(infile,'r') as f:
                         pass
                 elif pstr=='p443':
                     try:
-                        tls=j_content['p443']['data']['http']['response']['request']['tls_handshake']
+                        tls=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']
                         ver=tls['server_hello']['version']['name']
                         # make sure we got an FP for that - sometimes we get protocol versions
                         # but don't get an FP, which skews the numbers. That can happen
@@ -241,7 +242,16 @@ with open(infile,'r') as f:
                         pass
                 else:
                     try:
-                        tls=j_content[pstr]['data']['tls']
+                        prot = ""
+                        if(pstr=="p25"):
+                            prot="smtp"
+                        if(pstr=="p110"):
+                            prot="pop3"
+                        if(pstr=="p143"):
+                            prot="imap"
+                        if(pstr=="p993"):
+                            prot="imap"
+                        tls=j_content[pstr]['data'][prot]['result']['tls']['handshake_log']
                         ver=tls['server_hello']['version']['name']
                         # make sure we got an FP for that - sometimes we get protocol versions
                         # but don't get an FP, which skews the numbers. That can happen
