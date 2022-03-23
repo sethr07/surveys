@@ -82,9 +82,9 @@ ztimeout=' -t 2' #2 secs
 # zgrab2 port parameters
 pparms={ 
         '22': 'ssh -p 22',
-        '25': 'smtp -p 25 -- starttls',
-        '110': 'pop3 -p 110 -- starttls',
-        '143': 'imap -p 143 -- starttls',
+        '25': 'smtp -p 25 --starttls',
+        '110': 'pop3 -p 110 --starttls',
+        '143': 'imap -p 143 --starttls',
         '443': 'http -p 443 --use-https',
         '587': 'smtp -p 587 --smtps',
         '993': 'imap -p 993 --imaps',
