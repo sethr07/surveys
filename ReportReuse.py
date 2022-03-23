@@ -61,7 +61,7 @@ def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
         glen=len(gvgraph.source)
         if not dorender or glen > maxglen:
             if dorender:
-                print >>sys.stderr, "Not rendering graph for cluster "+ str(cnum) + " - too long: " + str(glen)
+                print(sys.stderr, "Not rendering graph for cluster "+ str(cnum) + " - too long: " + str(glen))
             gvgraph.save(odir + "/graph"+str(cnum)+".dot")
             if not dorender:
                 return True
@@ -385,7 +385,7 @@ if domem==False:
 del grr
 
 summary_fp=open(outdir+"/summary.txt","a+")
-print (summary_fp, "collisions: " + str(checkcount) + "\n\t" + \
+summary_fp.write("collisions: " + str(checkcount) + "\n\t" + \
         "total clusters: " + str(clustercount) + "\n\t" + \
         "graphs not rendered: " + str(notrendered))
 summary_fp.close()

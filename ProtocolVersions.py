@@ -75,7 +75,7 @@ def counterupdate(inout,pstr,ver):
 # figure out runname
 dirname=os.getcwd()
 print (dirname)
-fullrunname=dirname.split('/')[-1]
+fullrunname=dirname.split('/')[-1] # need to check this oiut ->
 #runname=fullrunname.split('-')[0] + '-' + fullrunname.split('-')[1] 
 #print (sys.stderr, "Doing " + runname)
 
@@ -322,6 +322,7 @@ print (sys.stderr, "Overall TLS Counters:\n" + bstr)
 
 # produce some latex table entry lines, for tls
 eotl=' \\\\ \\hline'
+# runname not working rn - need to check this out
 #print (runname + eotl)
 print (eotl)
 lineout= 'port ' 
