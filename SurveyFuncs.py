@@ -647,7 +647,8 @@ def mm_info(ip):
 
 #checks for ip against country using mmdb databases
 def mm_ipcc(ip, cc):
-    theip=ipaddress.IPv4Address(ip.decode('utf-8'))
+    theip=ip
+    #theip=ipaddress.IPv4Address(ip.decode('utf-8')) #throws errors?
     if cc == "XX":
         return True
     else:

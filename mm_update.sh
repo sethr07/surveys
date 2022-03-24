@@ -90,7 +90,9 @@ cc_file="iso3166.csv?lang=en"
 cc_fname="cc.csv"
 cp $cc_file $cc_fname
 rm -f $cc_file
+# delete country name coloumn and make a new csv - just need country code
 awk -F "\"*,\"*" '{print $1}' cc.csv > countrycodes.csv
+rm -f $cc_fname
 
 echo "Getting data from GeoCountryWhois.csv"
 dbdate=`ls -d "GeoLite2-Country-CSV"_* | awk -F"_" '{print $2}'`
@@ -102,5 +104,7 @@ cp $dirname/$fname2 $DESTDIR/$fname2
 
 echo "Creating csv file of ips country wise"
 $CURRDIR/MMCreateGeoIP.py
+rm -f $fname1
+rm -f $fname2
 echo "MMDB Setup Done."
 
