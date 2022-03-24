@@ -52,7 +52,7 @@ class OneFP():
         self.asn='' #autonomous system info from mm
         self.asndec=0 
         self.clusternum=0 #what cluster is it in
-        self.fprints={} #fingeprints for each ip
+        self.fprints={} #fingeprints for each port
         self.csize=1 #cluster size
         self.nrcs=0
         self.rcs={}
@@ -301,8 +301,10 @@ def getnextfprint_mem(fname):
         return onething
     else:
         return line
-#functions to make clusters
 
+########################################
+#functions to make clusters
+########################################
 #reutrns the port string depeing on the index. - tested ok
 def indexport(index):
     return portstrings[index]
@@ -328,7 +330,6 @@ def collmask(mask,k1,k2):
         pass
     return newmask
 
-#expands the mask - tested ok - not sure what is exactly happening tho
 def expandmask(mask):
     emask=""
     intmask=int(mask,16)
@@ -339,11 +340,10 @@ def expandmask(mask):
             if intmask & cmpmask:
                 emask += indexport(i) + "==" + indexport(j) + ";"
     return emask
-
-
-###########################
-# Functions for getting same keys
-###########################
+########################################
+########################################
+# Stuff for reading fprints json file
+########################################
 def j2o(jthing):
     ot=OneFP()
     #print json.dumps(jthing)
@@ -360,7 +360,6 @@ def j2o(jthing):
     ot.analysis=jthing['analysis']
     #printOneFP(ot)
     return ot
-
 
 def getnextfprint(fp):
     # read the next fingerprint from the file pointer
@@ -428,7 +427,6 @@ def getnextfprint(fp):
     else:
         return line
 
-
 # check if supposed domain name is a bogon so as to avoid
 # doing e.g. DNS checks
 def fqdn_bogon(dn):
@@ -460,7 +458,8 @@ def fqdn_bogon(dn):
     except:
         return True
     return False
-
+########################################
+###Stuff for parsing out info from zgrab2 output.
 # analyse the tls details - this ought work for other ports as
 # well as p25
 # scandate is needed to check if cert was expired at time of
@@ -592,11 +591,10 @@ def get_certnames(portstring,cert,nameset):
         #print (sys.stderr, "FQDN san exception " + str(e) + " for record:" + str(count))
         pass
     return
-##########################
-
-###########################
+########################################
+########################################
 # MaxMind Stuff 
-###########################
+########################################
 mmdbpath = 'code/surveys/mmdb/'
 mmdbdir = os.environ['HOME'] + '/' + mmdbpath
 
@@ -660,6 +658,4 @@ def mm_ipcc(ip, cc):
         else:
             return False
 
-
-    
-
+#################

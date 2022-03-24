@@ -182,6 +182,7 @@ else:
                 pass
 
             # name from banner
+
             try:
                 p25=j_content['p25']
                 #print(p25['data'])
@@ -208,7 +209,7 @@ else:
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''  
 
-            # port 25 - get key
+            # port 25 - get key if some crypto
             try:
                 if thisone.writer=="FreshGrab.py":
                     #zgrab2 output
