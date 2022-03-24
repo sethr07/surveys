@@ -380,6 +380,7 @@ else
 	echo "Done getting fresh records" 
 	echo "Done getting fresh records" >>$logf 
 fi
+#testing ->
 
 # 3. Find clusters 
 if [ "$SKIP_CLUSTER" ]
@@ -387,14 +388,17 @@ then
 	echo "Skipping cluster"
 	echo "Skipping cluster" >>$logf
 else
+	cd1=`date +%s`
 	echo "Clustering records" 
 	echo "Clustering records" >>$logf 
 	# this will take a some times - a couple of hours
 	$srcdir/SameKeys.py -i $TELLTALE_FRESH -o $TELLTALE_CLUSTER -c $country >>$logf 2>&1 
+	cd2=`date +%s`
 	if [ "$?" != "0" ]
 	then
 		echo "Error ($?) from SameKeys.py"
 	fi
+	echo exec time was "expr $cd2-$cd1" s.
 	echo "Done clustering records" 
 	echo "Done clustering records" >>$logf 
 fi

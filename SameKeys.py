@@ -35,8 +35,8 @@ import jsonpickle
 import time, datetime
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
-from SurveyFuncs import *
-
+#from SurveyFuncs import *
+from sfnew import *
 #default values
 #indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
 #infile=indir+"records.fresh"
@@ -201,9 +201,9 @@ else:
                     nameset['banner']=banner_fqdn
                 #need to work this out ->    
                 elif ts[0].startswith("220-"):
-                    print("Starts with fqdn: \n")
+                    #print("Starts with fqdn: \n")
                     banner_fqdn=ts[0][4:]
-                    print(banner_fqdn)
+                    #print(banner_fqdn)
                     nameset['banner']=banner_fqdn
             except Exception as e: 
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
@@ -362,8 +362,8 @@ else:
             #print(nameset)
             for k in nameset:
                 v=nameset[k]
-                print("Printing V: ", v)
-                print("checking: " + k + " " + v)
+                #print("Printing V: ", v)
+                #print("checking: " + k + " " + v)
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
                     try:
