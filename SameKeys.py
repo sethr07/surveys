@@ -35,8 +35,7 @@ import jsonpickle
 import time, datetime
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
-#from SurveyFuncs import *
-from sfnew import *
+from SurveyFuncs import *
 #default values
 #indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
 #infile=indir+"records.fresh"

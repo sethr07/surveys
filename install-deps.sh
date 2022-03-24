@@ -65,7 +65,7 @@ sudo apt-get -y install zmap
 
 # maxmind stuff
 ./mm_update.sh
-
+echo "Installing Golang."
 if [ ! -d /usr/lib/go-1.15.5 ]
 then
     mkdir -p $HOME/code/go
