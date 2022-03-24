@@ -47,7 +47,7 @@ parser.add_argument('-s','--sleep',
 args=parser.parse_args()
 
 def usage():
-    print >>sys.stderr, "usage: " + sys.argv[0] + " -i <infile> [-d] [-o <putfile>] [-s <sleepsecs>]"
+    print (sys.stderr, "usage: " + sys.argv[0] + " -i <infile> [-d] [-o <putfile>] [-s <sleepsecs>]")
     sys.exit(1)
 
 if args.infile is None:
@@ -55,10 +55,10 @@ if args.infile is None:
 
 # checks - can we read/write 
 if not os.access(args.infile,os.R_OK):
-    print >> sys.stderr, "Can't read input file " + args.infile + " - exiting"
+    print (sys.stderr, "Can't read input file " + args.infile + " - exiting")
     sys.exit(1)
 if args.outfile is not None and os.path.isfile(args.outfile) and not os.access(args.outfile,os.W_OK):
-    print >> sys.stderr, "Can't write to output file " + args.outfile + " - exiting"
+    print (sys.stderr, "Can't write to output file " + args.outfile + " - exiting")
     sys.exit(1)
 
 # default to a 100ms wait between checks
@@ -68,13 +68,14 @@ if args.outfile is not None:
     out_f=open(args.outfile,"w")
 else:
     out_f=sys.stdout
-
-print >>out_f, "Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time()))
+print("Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time())))
+out_f.write("Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time())))
 
 sleepval=defsleep
 if args.sleepsecs is not None:
     sleepval=float(args.sleepsecs)
-    print >>out_f, "Will sleep for " + str(sleepval) + " seconds between ssh-keyscans"
+    print ("Will sleep for " + str(sleepval) + " seconds between ssh-keyscans")
+    out_f.write("Will sleep for " + str(sleepval) + " seconds between ssh-keyscans")
 
 def gethostkey(ip):
     rv=[]
@@ -83,6 +84,7 @@ def gethostkey(ip):
         cmd='/usr/bin/ssh-keyscan ' + ip 
         proc_scan=subprocess.Popen(cmd.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         pc=proc_scan.communicate()
+        print(pc)
         lines=pc[0].split('\n')
         #print "lines: " + str(lines) + "\n"
         for x in range(0,len(lines)):
@@ -93,6 +95,7 @@ def gethostkey(ip):
             cmd='/usr/bin/ssh-keygen -l -f -'
             proc_hash=subprocess.Popen(cmd.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=None)
             pc=proc_hash.communicate(input=lines[x])
+            print(pc)
             b64hashes=pc[0].split('\n')
             for y in range(0,len(b64hashes)):
                 if b64hashes[y]=='\n' or b64hashes[y]=='' or b64hashes[y]==[]:
@@ -108,7 +111,8 @@ def gethostkey(ip):
                 #print ahhash
                 rv.append(ahhash)
     except Exception as e:
-        #print >>out_f, "gethostkey",ip,e
+        out_f.write("gethostkey",ip,e)
+        print ("gethostkey",ip,e)
         pass
     return rv
 
@@ -144,15 +148,18 @@ while f:
     ipcount+=1
     ip=f.ip
     if 'p22' not in f.fprints:
-        print >>out_f, "Ignoring",ip,"no SSH involved"
+        out_f.write("Ignoring",ip,"no SSH involved")
+        print("Ignoring",ip,"no SSH involved")
     else:
         ttcount+=1
-        print >>out_f,  "Checking " + ip + " recorded as: " + f.fprints['p22']
+        out_f.write("Checking " + ip + " recorded as: " + f.fprints['p22'])
+        print ("Checking " + ip + " recorded as: " + f.fprints['p22'])
         if args.dryrun:
             f=getnextfprint(fp)
             continue
         hkey=gethostkey(ip)
         if hkey:
+            out_f.write("keys at " + ip + " now are:"+str(hkey))
             print  >>out_f, "keys at " + ip + " now are:"+str(hkey)
         else:
             print  >>out_f, "No ssh keys visible at " + ip + " now"

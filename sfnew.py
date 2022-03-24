@@ -36,18 +36,17 @@ from dataclasses import dataclass
 # using a class needs way less memory than random dicts apparently
 @dataclass
 class OneFP():
-    def __init__(self):
-        self.writer='unknown'
-        self.ip_record=-1 #no of ips
-        self.ip='' #ip
-        self.asn='' #autonomous system info from mm
-        self.asndec=0 
-        self.clusternum=0 #what cluster is it in
-        self.fprints={} #fingeprints for each port
-        self.csize=1 #cluster size
-        self.nrcs=0
-        self.rcs={}
-        self.analysis={}
+    writer='unknown'
+    ip_record=-1 #no of ips
+    ip='' #ip
+    asn='' #autonomous system info from mm
+    asndec=0 
+    clusternum=0 #what cluster is it in
+    fprints={} #fingeprints for each port
+    csize=1 #cluster size
+    nrcs=0
+    rcs={}
+    analysis={}
 
 # some "constants" for the above
 KEYTYPE_UNKNOWN=0           # initial value

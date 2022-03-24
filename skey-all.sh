@@ -398,7 +398,8 @@ else
 	then
 		echo "Error ($?) from SameKeys.py"
 	fi
-	echo exec time was "expr $cd2-$cd1" s.
+	runtime=$cd2-$cd1
+	echo "runtime is: $runtime"
 	echo "Done clustering records" 
 	echo "Done clustering records" >>$logf 
 fi
@@ -413,7 +414,7 @@ else
 	echo "Graphing records" >>$logf 
 	# this will take a some times - a couple of hours
 	# with legend
-	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -l -o . -g -c $country >>$logf 2>&1 
+	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -o resdir -a -l -o . -g -c $country >>$logf 2>&1 
 	# without legend
 	#$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -o . -c $country >>$logf 2>&1 
 	if [ "$?" != "0" ]

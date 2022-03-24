@@ -23,6 +23,8 @@
 from operator import index
 import re
 import json
+from ssl import SSLSocket
+from telnetlib import TLS
 import jsonpickle
 import copy
 import csv

@@ -264,14 +264,14 @@ else:
             #port 110 - pop3: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p110']['pop3']['data']['result']['tls']['handshake_log']['server_certificates']['certificate']
-                    fp=j_content['p110']['data']['pop3']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    get_tls(thisone.writer,'p25',j_content['p110']['data']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
+                    cert=j_content['p110']['data']['pop3']['result']['tls']['handshake_log']['server_certificates']['certificate']
+                    fp=j_content['p110']['data']['pop3']['result']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    get_tls(thisone.writer,'p110',j_content['p110']['pop3']['data']['result']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
                     #censys stuff
                     fp=j_content['p110']['pop3']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     cert=j_content['p110']['pop3']['starttls']['tls']['certificate']
-                    get_tls(thisone.writer,'p25',j_content['p110']['pop3']['starttls']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
+                    get_tls(thisone.writer,'p110',j_content['p110']['pop3']['starttls']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
                 get_certnames('p110',cert,nameset)
                 thisone.fprints['p110']=fp
                 somekey=True
@@ -282,9 +282,9 @@ else:
             #port 143 - imap: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p143']['imap']['data']['tls']['server_certificates']['certificate']
-                    fp=j_content['p143']['imap']['data']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    get_tls(thisone.writer,'p143',j_content['p143']['data']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
+                    cert=j_content['p143']['imap']['data']['result']['tls']['server_certificates']['certificate']
+                    fp=j_content['p143']['imap']['data']['result']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    get_tls(thisone.writer,'p143',j_content['p143']['data']['imap']['result']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
                     cert=j_content['p143']['pop3']['starttls']['tls']['certificate']
                     fp=j_content['p143']['imap']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
@@ -448,6 +448,8 @@ biggestcollider=-1
 
 # identify 'em
 clusternum=0
+
+print(fingerprints)
 
 fl=len(fingerprints)
 print("total fingerprints: ", fl)
