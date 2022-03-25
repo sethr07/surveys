@@ -43,26 +43,29 @@ from SurveyFuncs import *
 
 
 # command line arg handling 
-parser=argparse.ArgumentParser(description=' Count the host/port combos and the number of actual keys found, from all hosts that do some crypto')
+parser=argparse.ArgumentParser(description=' Count the host/port combos and the number of actual keys found, from all hosts that do some crypto.\n \
+                                            Defualt File is "all-key-fingerprints.')
 parser.add_argument('-f','--file',     
                     dest='fname',
                     help='json file containing key fingerprints')
 args=parser.parse_args()
 
-
-# if this then just print legend
 if args.fname is None:
-    print (args)
+    print ("No file provided. using default file.")
+
+def_file="all-key-fingerprints.json"
+if(def_file):
+    args.fname = def_file
+else:
+    print("No default file in curr dir.\n")
     sys.exit(0)
 
 # main line processing ...
-
 # we need to pass over all the fingerprints to do our counts
 checkcount=0
 fps_seen=set()
 hostsports=0
 hosts=0
-
 # open file
 fp=open(args.fname,"r")
 
@@ -96,7 +99,7 @@ summary_fp.write("hosts: " + str(hosts) + "\n" + \
         "fps: " + str(len(fps_seen)))
 summary_fp.close()
 
-print  (sys.stderr, "hosts: " + str(hosts) + "\n" + \
+print (sys.stderr, "hosts: " + str(hosts) + "\n" + \
         "hostsports: " + str(hostsports) + "\n" + \
         "fps: " + str(len(fps_seen)))
 

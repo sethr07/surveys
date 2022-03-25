@@ -20,22 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from dataclasses import dataclass
-from operator import index
 import re
 import json
-from ssl import SSLSocket
-from telnetlib import TLS
-import jsonpickle
-import copy
-import csv
-import os, sys, socket
-import geoip2.database
 import ipaddress
+import csv
+import os, sys
 from dateutil import parser as dparser 
+import jsonpickle
+import geoip2.database
 import graphviz as gv
-from dataclasses import dataclass,field
-from typing import Dict
+
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -90,7 +84,7 @@ MAXSAN=100
 
 # try and get memory usage of class -> testing
 def get_size(obj, seen=None):
-    """Recursively finds size of objects"""
+    #Recursively finds size of objects
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()

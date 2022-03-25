@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 #
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
-#  
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -31,8 +30,9 @@
 
 import os, sys, argparse, tempfile, gc, re
 import json
-import jsonpickle 
+import socket
 import time, datetime
+import jsonpickle 
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
 from SurveyFuncs import *
@@ -429,7 +429,7 @@ else:
     del bads
 
     # this gets crapped on each time (for now)
-    keyf=open('all-key-fingerprints.json', 'w')
+    keyf= open('all-key-fingerprints.json', 'w')
     keyf.write("[\n")
 
 ###WORKS FINE UNTIL HERE##
