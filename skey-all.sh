@@ -404,6 +404,7 @@ else
 	echo "Done clustering records" >>$logf 
 fi
 
+echo $pwd
 # 4. Generate graphs/reports
 if [ "$SKIP_GRAPH" ]
 then
