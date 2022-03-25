@@ -122,6 +122,8 @@ else:
             #print(j_content)
             somekey=False
             thisone=OneFP() # initialise class in surveyfuncs
+            memuse=get_size(thisone)
+            print("Memory usage: ", memuse)
             thisone.ip_record=overallcount #no of ips
             thisone.ip=j_content['ip'].strip() #get ip from json strcuture
             #print(thisone.ip)
@@ -212,7 +214,7 @@ else:
             try:
                 if thisone.writer=="FreshGrab.py":
                     #zgrab2 output
-                    tls=j_content['p25']['smtp']['data']['tls']['handshake_log']
+                    tls=j_content['p25']['data']['smtp']['tls']['handshake_log']
                     cert=tls['server_certificates']['certificate']
                 else:
                     # not sure about this ->

@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from dataclasses import dataclass
 from operator import index
 import re
 import json
@@ -33,6 +34,8 @@ import geoip2.database
 import ipaddress
 from dateutil import parser as dparser 
 import graphviz as gv
+from dataclasses import dataclass,field
+from typing import Dict
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -60,6 +63,8 @@ class OneFP():
         self.rcs={}
         self.analysis={}
 
+
+
 # some "constants" for the above
 KEYTYPE_UNKNOWN=0           # initial value
 KEYTYPE_RSASHORT=1          # <1024
@@ -82,6 +87,27 @@ CERTTYPE_OTHER=5            # oddbballs, don't expect any
 # A few certs have waaay too many sans (1500+), we're only bothering with this
 # many at most
 MAXSAN=100
+
+# try and get memory usage of class -> testing
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+    return size
 
 
 portstrings=['p22','p25','p110','p143','p443','p587','p993']

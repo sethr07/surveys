@@ -403,8 +403,8 @@ else
 	echo "Done clustering records" 
 	echo "Done clustering records" >>$logf 
 fi
-
-echo $pwd
+dir=`pwd`
+echo $dir
 # 4. Generate graphs/reports
 if [ "$SKIP_GRAPH" ]
 then

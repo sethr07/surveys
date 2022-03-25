@@ -43,7 +43,7 @@ import graphviz as gv
 toobiggraph=10
 # default output directory
 parent_dir = os.getcwd()
-makedir = "/graphs"
+makedir = "graphs"
 outdir=os.path.join(parent_dir, makedir)
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
