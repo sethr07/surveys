@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -46,21 +46,8 @@ parser.add_argument('-s','--sleep',
                     help='number of seconds to sleep between ssh-keyscan (fractions allowed)')
 args=parser.parse_args()
 
-def usage():
-    print (sys.stderr, "usage: " + sys.argv[0] + " -i <infile> [-d] [-o <putfile>] [-s <sleepsecs>]")
-    sys.exit(1)
-
-if args.infile is None:
-    usage()
-
-# checks - can we read/write 
-if not os.access(args.infile,os.R_OK):
-    print (sys.stderr, "Can't read input file " + args.infile + " - exiting")
-    sys.exit(1)
-if args.outfile is not None and os.path.isfile(args.outfile) and not os.access(args.outfile,os.W_OK):
-    print (sys.stderr, "Can't write to output file " + args.outfile + " - exiting")
-    sys.exit(1)
-
+infile = "collisions.json"
+outfile = "sshrecs.two"
 # default to a 100ms wait between checks
 defsleep=0.1
 
@@ -69,8 +56,9 @@ if args.outfile is not None:
 else:
     out_f=sys.stdout
 print("Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time())))
-out_f.write("Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time())))
+out_f.write("Running " + str(sys.argv[0:]) + "starting at" + str(time.asctime(time.localtime(time.time()))))
 
+outfile="collisions.json"
 sleepval=defsleep
 if args.sleepsecs is not None:
     sleepval=float(args.sleepsecs)
@@ -85,10 +73,10 @@ def gethostkey(ip):
         proc_scan=subprocess.Popen(cmd.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         pc=proc_scan.communicate()
         print(pc)
-        lines=pc[0].split('\n')
-        #print "lines: " + str(lines) + "\n"
+        lines=pc[0].split('b\n')
+        print ("lines: " + str(lines) + "\n")
         for x in range(0,len(lines)):
-            #print lines[x]
+            print (lines[x])
             if lines[x]=='\n' or lines[x]=='' or lines[x][0]=='#':
                 continue
             # pass to ssh-keygen
@@ -111,7 +99,7 @@ def gethostkey(ip):
                 #print ahhash
                 rv.append(ahhash)
     except Exception as e:
-        out_f.write("gethostkey",ip,e)
+        out_f.write("gethostkey"+str(ip)+str(e))
         print ("gethostkey",ip,e)
         pass
     return rv
@@ -127,13 +115,14 @@ def anymatch(one,other):
                     #print "anymatch",x,y
                     return True
     except Exception as e:
-        #print >>out_f, "nomatch: x",x,"y",y,e
+        out_f.write("nomatch: x" + str(x) + "y" + str(y) + str(e))
+        print("nomatch: x",x,"y",y,e)
         pass
     return False
 
 # mainline processing
 
-fp=open(args.infile,"r")
+fp=open(infile,"r")
 
 ipsdone={}
 
@@ -148,7 +137,7 @@ while f:
     ipcount+=1
     ip=f.ip
     if 'p22' not in f.fprints:
-        out_f.write("Ignoring",ip,"no SSH involved")
+        out_f.write("Ignoring" + ip + "no SSH involved")
         print("Ignoring",ip,"no SSH involved")
     else:
         ttcount+=1
@@ -160,9 +149,10 @@ while f:
         hkey=gethostkey(ip)
         if hkey:
             out_f.write("keys at " + ip + " now are:"+str(hkey))
-            print  >>out_f, "keys at " + ip + " now are:"+str(hkey)
+            print("keys at " + ip + " now are:"+str(hkey))
         else:
-            print  >>out_f, "No ssh keys visible at " + ip + " now"
+            out_f.write("No ssh keys visible at " + ip + " now")
+            print("No ssh keys visible at " + ip + " now")
         ipsdone[ip]=hkey
         for ind in f.rcs:
             pip=f.rcs[ind]['ip']
@@ -170,12 +160,14 @@ while f:
             if 'p22' in str_colls:
                 if ip in ipmatrix:
                     if pip in ipmatrix[ip]:
-                        print >>out_f, "\tChecking",ip,"vs",pip,"done already"
+                        out_f.write("\tChecking"+str(ip)+"vs"+str(pip)+"done already")
+                        print ("\tChecking",ip,"vs",pip,"done already")
                         continue
                 else:
                     ipmatrix[ip]={}
                 ipmatrix[ip][pip]=True
-                print >>out_f, "\tChecking",ip,"vs",pip
+                out_f.write("\tChecking"+str(ip)+"vs"+str(pip))
+                print ("\tChecking",ip,"vs",pip)
                 if pip in ipmatrix:
                     if ip in ipmatrix[pip]:
                         continue
@@ -188,24 +180,32 @@ while f:
                     pkey=gethostkey(pip)
                     ipsdone[pip]=pkey
                 if pkey:
-                    print  >>out_f, "\t"+ "keys at " + pip + " now are: " + str(pkey)
+                    out_f.write("\t"+ "keys at " + pip + " now are: " + str(pkey))
+                    print(out_f, "\t"+ "keys at " + pip + " now are: " + str(pkey))
                 else:
-                    print  >>out_f, "\tNo ssh keys visible at " + pip + " now"
+                    out_f.write("\tNo ssh keys visible at " + pip + " now")
+                    print(out_f, "\tNo ssh keys visible at " + pip + " now")
 
                 if anymatch(pkey,hkey):
                     matches+=1
                 else:
-                    print >>out_f, "EEK - Discrepency between "+ ip +" and " + pip 
-                    print >>out_f, "EEK - " + ip + " == " + str(hkey)
-                    print >>out_f, "EEK - " + pip + " == " + str(pkey)
+                    out_f.write("EEK - Discrepency between "+ ip +" and " + pip) 
+                    out_f.write("EEK - " + ip + " == " + str(hkey))
+                    out_f.write("EEK - " + pip + " == " + str(pkey))
+                    print("EEK - Discrepency between "+ ip +" and " + pip)
+                    print("EEK - " + ip + " == " + str(hkey))
+                    print ("EEK - " + pip + " == " + str(pkey))
                     mismatches+=1
     f=getnextfprint(fp)
 
-print >>out_f, "TwentyTwo,infile,ipcount,22count,matches,mismatches"
-print >>out_f, "TwentyTwo,"+args.infile+","+str(ipcount)+","+str(ttcount)+","+str(matches)+","+str(mismatches)
+out_f.write("TwentyTwo,infile,ipcount,22count,matches,mismatches")
+out_f.write("TwentyTwo,"+args.infile+","+str(ipcount)+","+str(ttcount)+","+str(matches)+","+str(mismatches))
+print(out_f, "TwentyTwo,infile,ipcount,22count,matches,mismatches")
+print(out_f, "TwentyTwo,"+args.infile+","+str(ipcount)+","+str(ttcount)+","+str(matches)+","+str(mismatches))
 #print >>out_f, ipsdone
 
-print >>out_f, "Ran ",sys.argv[0:]," finished at ",time.asctime(time.localtime(time.time()))
+out_f.write("Ran " + str(sys.argv[0:]) + " finished at " + str(time.asctime(time.localtime(time.time()))))
+print("Ran ",sys.argv[0:]," finished at ",time.asctime(time.localtime(time.time())))
 
 #jsonpickle.set_encoder_options('json', sort_keys=True, indent=2)
 #print jsonpickle.encode(ipmatrix)

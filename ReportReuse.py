@@ -42,6 +42,7 @@ import graphviz as gv
 # for specific ports, but just mail,web,ssh etc.
 toobiggraph=10
 # default output directory
+
 outdir="graphs"
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
@@ -340,8 +341,10 @@ while f:
                 repf.write(creps[cnum])
                 nl="\n]\n"
                 repf.write(nl)
-                print (repf, creps[cnum])
-                print (repf, "\n]\n")
+                repf.write(creps[cnum])
+                repf.write("\n]\n")
+                #print (creps[cnum])
+                #print ("\n]\n")
                 repf.close()
                 del creps[cnum]
                 clipsdone[cnum] = -1

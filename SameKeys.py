@@ -281,8 +281,8 @@ else:
             #port 143 - imap: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p143']['imap']['data']['result']['tls']['server_certificates']['certificate']
-                    fp=j_content['p143']['imap']['data']['result']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
+                    cert=j_content['p143']['data']['imap']['result']['tls']['server_certificates']['certificate']
+                    fp=j_content['p143']['data']['imap']['result']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     get_tls(thisone.writer,'p143',j_content['p143']['data']['imap']['result']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
                     cert=j_content['p143']['pop3']['starttls']['tls']['certificate']
@@ -451,10 +451,9 @@ clusternum=0
 print(fingerprints)
 
 fl=len(fingerprints)
-print("total fingerprints: ", fl)
+#print("total fingerprints: ", fl)
 for i in range(0,fl):
     r1=fingerprints[i] #first rec
-    print(r1)
     rec1=r1.ip_record
     for j in range (i+1,fl):
         r2=fingerprints[j] #next rec
