@@ -42,9 +42,11 @@ import graphviz as gv
 # for specific ports, but just mail,web,ssh etc.
 toobiggraph=10
 # default output directory
-parent_dir = os.getcwd()
-makedir = "graphs"
-outdir=os.path.join(parent_dir, makedir)
+
+#NB:
+# need to test dir with skey-all.sh
+mkdir = "graphs"
+
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
     #print "Graphing cluster: " + str(cnum)

@@ -413,11 +413,11 @@ then
 else
 	echo "Graphing records" 
 	echo "Graphing records" >>$logf 
-	# this will take a some times - a couple of hours
+	# this will take a some time - not a lot for now atleast
 	# with legend
-	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -l -o . -g -c $country >>$logf 2>&1 
+	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -l -o $resdir . -g -c $country >>$logf 2>&1 
 	# without legend
-	#$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -o . -c $country >>$logf 2>&1 
+	#$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -o $resdir . -c $country >>$logf 2>&1 
 	if [ "$?" != "0" ]
 	then
 		echo "Error ($?) from ReportReuse.py"
