@@ -210,10 +210,9 @@ else:
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''  
 
-            # port 25 - get key if some crypto
+            # port 25 - gneed to double check output and integrate with function
             try:
                 if thisone.writer=="FreshGrab.py":
-                    #zgrab2 output
                     tls=j_content['p25']['data']['smtp']['tls']['handshake_log']
                     cert=tls['server_certificates']['certificate']
                 else:
@@ -234,20 +233,14 @@ else:
             #port 22 -ssh - tested ok
             try:
                 if thisone.writer=="FreshGrab.py":
-                    #maxmind results
-                    fp=j_content['p22']['data']['ssh']['result']['key_exchange']['server_host_key']['fingerprint_sha256'] 
-                    #print("fp for ssh: ", fp)
-                    #print("\n")
-                    shk=j_content['p22']['data']['ssh']['result']['key_exchange']['server_host_key']
-                    #print("SSH: ", shk)
-                    #print("\n")
+                    data = j_content['p22']['data']['ssh']
+                    shk, fp = get_dets_ssh(data)
+
                     if shk['algorithm']=='ssh-rsa':
-                        #print("it is rsa\n")
-                        #print(shk['rsa_public_key']['length'])
                         thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
                     else:
                         thisone.analysis['p22']['alg']=shk['algorithm']
-                        #print(shk['algorithm'])
+
                 else:
                     #censys,io results - not using for now atleast?
                     fp=j_content['p22']['ssh']['v2']['server_host_key']['fingerprint_sha256'] 
@@ -265,9 +258,9 @@ else:
             #port 110 - pop3: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p110']['data']['pop3']['result']['tls']['handshake_log']['server_certificates']['certificate']
-                    fp=j_content['p110']['data']['pop3']['result']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    get_tls(thisone.writer,'p110',j_content['p110']['pop3']['data']['result']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
+                    data = j_content['p110']['data']['pop3']['result']['tls']
+                    cert, fp = get_dets_email(data)
+                    get_tls(thisone.writer,'p110',data,j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
                     #censys stuff
                     fp=j_content['p110']['pop3']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
@@ -280,12 +273,12 @@ else:
                 print(sys.stderr, "p110 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 143 - imap: data format wrong 
+            #port 143 - imap
             try:
                 if thisone.writer=="FreshGrab.py":
-                    cert=j_content['p143']['data']['imap']['result']['tls']['server_certificates']['certificate']
-                    fp=j_content['p143']['data']['imap']['result']['tls']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    get_tls(thisone.writer,'p143',j_content['p143']['data']['imap']['result']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
+                    data = j_content['p143']['data']['imap']['result']['tls']
+                    cert, fp = get_dets_email(data)
+                    get_tls(thisone.writer,'p143',data,j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
                     cert=j_content['p143']['pop3']['starttls']['tls']['certificate']
                     fp=j_content['p143']['imap']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
@@ -297,15 +290,12 @@ else:
                 print (sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 443 - https - tested ok
+            #port 443 - https 
             try:
                 if thisone.writer=="FreshGrab.py":
-                    fp=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    cert=j_content['p443']['data']['http']['result']['response']['request']['tls_log']['handshake_log']['server_certificates']['certificate']
-                    #print("P443: \n")
-                    #print("fp is:", fp)
-                    #print("cert is:", cert)
-                    get_tls(thisone.writer,'p443',j_content['p443']['data']['http']['result']['response']['request']['tls_log'],j_content['ip'],thisone.analysis['p443'],scandate)
+                    data = j_content['p443']['data']['http']['result']['response']['request']['tls_log']
+                    cert, fp = get_dets_http(data)
+                    get_tls(thisone.writer,'p443',data,j_content['ip'],thisone.analysis['p443'],scandate)
                 else:
                     #censys.io - not tested
                     fp=j_content['p443']['https']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
@@ -321,9 +311,9 @@ else:
             #port 587 - need to double check data for this - mostlty connection timeout/i-o error
             try:
                 if thisone.writer=="FreshGrab.py":
-                    fp=j_content['p587']['data']['smtp']['result']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    cert=j_content['p587']['data']['smtp']['result']['tls']['handshake_log']['server_certificates']['certificate']
-                    get_tls(thisone.writer,'p587',j_content['p587']['data']['smtp']['result']['tls'],j_content['ip'],thisone.analysis['p587'],scandate)
+                    data = j_content['p587']['data']['smtp']['result']['tls']
+                    cert, fp = get_dets_email(data)
+                    get_tls(thisone.writer,'p587',data,j_content['ip'],thisone.analysis['p587'],scandate)
                     somekey=True
                     get_certnames('p587',cert,nameset)
                     thisone.fprints['p587']=fp
@@ -337,12 +327,9 @@ else:
             #port 993 - imaps - tested ok
             try:
                 if thisone.writer=="FreshGrab.py":
-                    fp=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    cert=j_content['p993']['data']['imap']['result']['tls']['handshake_log']['server_certificates']['certificate']
-                    #print("P 993: \n")
-                    #print("Fp is: ", fp)
-                    #print("cert is:", cert)
-                    get_tls(thisone.writer,'p993',j_content['p993']['data']['imap']['result']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
+                    data = j_content['p993']['data']['imap']['result']['tls']
+                    cert, fp = get_dets_email(data)
+                    get_tls(thisone.writer,'p993',data,j_content['ip'],thisone.analysis['p993'],scandate)
                 else:
                     fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
@@ -446,12 +433,8 @@ checkcount=0
 colcount=0
 mostcollisions=0
 biggestcollider=-1
-
 # identify 'em
 clusternum=0
-
-print(fingerprints)
-
 fl=len(fingerprints)
 #print("total fingerprints: ", fl)
 for i in range(0,fl):

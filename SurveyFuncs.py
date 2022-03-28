@@ -682,3 +682,26 @@ def mm_ipcc(ip, cc):
             return False
 
 #################
+# Creating some funcs to simply samekeys.py
+
+# get all info for email prots as they have the same structure
+# ports: 25, 110, 143, 587, 993
+# idea: integrate with get_tls
+def get_dets_email(data):
+    cert = data['handshake_log']['server_certificates']['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+    return cert, fp
+
+# for ssh - tested ok
+def get_dets_ssh(data):
+    #print("SSH test")
+    #print(data)
+    shk = data['result']['key_exchange']['server_host_key']
+    fp = shk['fingerprint_sha256']
+    return shk, fp
+
+# tested ok 
+def get_dets_http(data):
+    cert = data['handshake_log']['server_certificates']['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+    return cert, fp

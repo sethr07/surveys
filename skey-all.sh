@@ -415,8 +415,7 @@ else
 	echo "Graphing records" >>$logf 
 	# this will take a some time - not a lot for now atleast
 	# with legend
-	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -l -o $resdir . -g -c $country >>$logf 2>&1 
-	# without legend
+	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -l -o . -g -c $country >>$logf 2>&1 	# without legend
 	#$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -o $resdir . -c $country >>$logf 2>&1 
 	if [ "$?" != "0" ]
 	then
@@ -430,6 +429,4 @@ fi
 
 NOW=$(whenisitagain)
 echo "Overall Finished at $NOW" >>$logf
-
 cd $startdir
-
