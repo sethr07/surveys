@@ -78,7 +78,6 @@ if args.country is not None:
 
 # default timeout for zgrab2, in seconds
 ztimeout=' -t 2' #2 secs
-
 # zgrab2 port parameters
 pparms={ 
         '22': 'ssh -p 22',
