@@ -65,7 +65,7 @@ do
 		echo "Failed to download $url"
 	else
 		tar xzvf $tarball
-		dbdate=`ls -d "GeoLite2-$db"_* | awk -F"_" '{print $2}'`
+		dbdate=`ls -d "GeoLite2-$db"_* | tail -1 | awk -F"_" '{print $2}'`
 		dirname="GeoLite2-$db"_"$dbdate"
 		fname="GeoLite2-$db"
 		cp $dirname/$fname.mmdb $DESTDIR/$fname-$dbdate.mmdb
