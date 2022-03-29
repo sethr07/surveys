@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #script for making GeipCountrywhois csv for input to zmap
-import os
+import os, sys, tempfile
 import pandas as pd
 #directories and files
 indir=os.environ['HOME']+'/code/surveys/mmdb/'
