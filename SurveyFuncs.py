@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import profile
 import re
 import json
 import ipaddress
@@ -29,6 +30,7 @@ from dateutil import parser as dparser
 import jsonpickle
 import geoip2.database
 import graphviz as gv
+import gc
 
 
 # using a class needs way less memory than random dicts apparently
@@ -669,8 +671,8 @@ def mm_info(ip):
 
 #checks for ip against country using mmdb databases
 def mm_ipcc(ip, cc):
-    #theip=ip
-    theip=ipaddress.IPv4Address(ip.decode('utf-8')) #throws errors?
+    theip=ip
+    theip=ipaddress.IPv4Address(ip.decode('utf-8')) #throws errors for trial runs i did
     if cc == "XX":
         return True
     else:
@@ -705,3 +707,5 @@ def get_dets_http(data):
     cert = data['handshake_log']['server_certificates']['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
+
+### 

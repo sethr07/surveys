@@ -29,6 +29,7 @@
 # each ip is also looked up and comapred using reverse dns to make sure it matches.
 
 import os, sys, argparse, tempfile, gc, re
+import profile
 import json
 import socket
 import time, datetime
@@ -36,6 +37,12 @@ import jsonpickle
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
 from SurveyFuncs import *
+from memory_profiler import profile
+from guppy import hpy
+
+h = hpy()
+print(h)
+
 #default values
 #indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
 #infile=indir+"records.fresh"
@@ -195,24 +202,21 @@ else:
             # port 25 - gneed to double check output and integrate with function
             try:
                 if thisone.writer=="FreshGrab.py":
-                    tls=j_content['p25']['data']['smtp']['tls']['handshake_log']
-                    cert=tls['server_certificates']['certificate']
+                    data = j_content['p25']['data']['smtp']['result']['tls']
+                    cert, fp = get_dets_email(data)
                 else:
-                    # not sure about this ->
+                    # need toe edit - censys
                     tls=j_content['p25']['smtp']['starttls']['tls']
                     cert=tls['certificate']
                     
-                fp=cert['parsed']['subject_key_info']['fingerprint_sha256'] 
-                get_tls(thisone.writer,'p25',tls,j_content['ip'],thisone.analysis['p25'],scandate)
+                get_tls(thisone.writer,'p25',data,j_content['ip'],thisone.analysis['p25'],scandate)
                 get_certnames('p25',cert,nameset)
-                
                 thisone.fprints['p25']=fp
                 somekey=True
             except Exception as e: 
                 print (sys.stderr, "p25 exception for:" + thisone.ip + ":" + str(e))
                 pass  
 
-            #port 22 -ssh - tested ok
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p22']['data']['ssh']
@@ -222,9 +226,8 @@ else:
                         thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
                     else:
                         thisone.analysis['p22']['alg']=shk['algorithm']
-
                 else:
-                    #censys,io results - not using for now atleast - got new data
+                    # need toe edit - censys
                     fp=j_content['p22']['0']['ssh']['server_host_key']['fingerprint_sha256'] 
                     shk=j_content['p22']['0']['ssh']['v2']['algorithim_selection']
                     if shk['key_algorithm']=='ssh-rsa':
@@ -237,14 +240,13 @@ else:
                 print(sys.stderr, "p22 exception  for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 110 - pop3: data format wrong 
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p110']['data']['pop3']['result']['tls']
                     cert, fp = get_dets_email(data)
                     get_tls(thisone.writer,'p110',data,j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
-                    #censys stuff
+                    # need toe edit - censys
                     fp=j_content['p110']['pop3']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
                     cert=j_content['p110']['pop3']['starttls']['tls']['certificate']
                     get_tls(thisone.writer,'p110',j_content['p110']['pop3']['starttls']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
@@ -255,13 +257,13 @@ else:
                 print(sys.stderr, "p110 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 143 - imap
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p143']['data']['imap']['result']['tls']
                     cert, fp = get_dets_email(data)
                     get_tls(thisone.writer,'p143',data,j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
+                # need toe edit - censys
                     cert=j_content['p143']['imap']['starttls']['tls']['certificate']
                     fp=j_content['p143']['imap']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     get_tls(thisone.writer,'p143',j_content['p143']['imap']['starttls']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
@@ -272,16 +274,16 @@ else:
                 print (sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 443 - https 
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p443']['data']['http']['result']['response']['request']['tls_log']
                     cert, fp = get_dets_http(data)
                     get_tls(thisone.writer,'p443',data,j_content['ip'],thisone.analysis['p443'],scandate)
                 else:
+                    # need toe edit - censys
                     fp=j_content['p443']['https']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     cert=j_content['p443']['https']['tls']['certificate']
-                    #get_tls(thisone.writer,'p443',j_content['p443']['https']['tls'],j_content['ip'],thisone.analysis['p443'],scandate)
+                    get_tls(thisone.writer,'p443',j_content['p443']['https']['tls'],j_content['ip'],thisone.analysis['p443'],scandate)
                 get_certnames('p443',cert,nameset)
                 thisone.fprints['p443']=fp
                 somekey=True
@@ -289,7 +291,6 @@ else:
                 print(sys.stderr, "p443 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 587 - need to double check data for this - mostlty connection timeout/i-o error
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p587']['data']['smtp']['result']['tls']
@@ -305,13 +306,13 @@ else:
                 print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 993 - imaps 
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p993']['data']['imap']['result']['tls']
                     cert, fp = get_dets_email(data)
                     get_tls(thisone.writer,'p993',data,j_content['ip'],thisone.analysis['p993'],scandate)
                 else:
+                    # need toe edit - censys
                     fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
                     get_tls(thisone.writer,'p993',j_content['p993']['imaps']['tls']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
@@ -322,13 +323,10 @@ else:
                 print (sys.stderr, "p993 exception for:" + thisone.ip + ":" + str(e))
                 pass
             
-            ####
             besty=[]
             nogood=True # assume none are good
             tmp={}
             #try verify names a bit
-            #print("Printing nameset?")
-            #print(nameset)
             for k in nameset:
                 v=nameset[k]
                 #print("Printing V: ", v)
@@ -337,8 +335,7 @@ else:
                 if v != '' and not fqdn_bogon(v):
                     try:
                         rip=socket.gethostbyname(v)
-                        #print(rip)
-                        if rip == thisone.ip:
+                        if rip == thisone.ip: #if it matches dns
                             besty.append(k)
                         else:
                             tmp[k+'-ip']=rip
@@ -402,11 +399,10 @@ else:
 
 # might split this section into another file
 # it takes hella long to debug then
-# Tho, for now p443, p993, p22 outputs are good, rest we need to scan again.
-# might be better to get a fresh scan 
-
 # do clusters 
 # end of fpfile is not None
+
+#find_clusters(fingerprints, keyf, args.fpfile)
 checkcount=0
 colcount=0
 mostcollisions=0
@@ -493,11 +489,11 @@ if args.fpfile is None:
     keyf.write(']\n')
     keyf.close()
 
-
 colcount=0
 noncolcount=0
 accumcount=0
-
+h = hpy()
+print(h)
 # do clusters 
 clustersizes={}
 clustersizes[0]=0
