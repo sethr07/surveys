@@ -68,9 +68,9 @@ if args.outfile is not None:
     outfile=args.outfile
 
 if args.v4file is not None:
-    v4file=indir+'/'+args.v4file
+    v4file=indir+args.v4file
 else:
-    v4file=indir+'/'+def_v4file
+    v4file=indir+def_v4file
 
 dov4=True
 if args.nov4:
