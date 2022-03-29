@@ -104,7 +104,7 @@ cp $dirname/$fname2 $DESTDIR/$fname2
 
 echo "Creating csv file of ips country wise"
 $CURRDIR/MMCreateGeoIP.py
-rm -f $fname1
-rm -f $fname2
+#rm -f $fname1
+#rm -f $fname2
 echo "MMDB Setup Done."
 
