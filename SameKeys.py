@@ -98,7 +98,6 @@ if args.fpfile is not None:
     # read fingerprints from fpfile
     fpf=open(args.fpfile,"r")
     f=getnextfprint(fpf)
-    print(f)
     fpcount=0
     while f:
         fingerprints.append(f)
@@ -108,14 +107,11 @@ if args.fpfile is not None:
         f=getnextfprint(fpf)
     fpf.close()
 else:
-    #started from here
     bads={}
     # keep track of how long this is taking per ip
     peripaverage=0
     with open(infile,'r') as f:
         for line in f:
-            #line is json structre - output from zmap 
-            #print(line)
             ipstart=time.time() 
             badrec=False
             j_content = json.loads(line) #one json structure per line
@@ -123,18 +119,16 @@ else:
             somekey=False
             thisone=OneFP() # initialise class in surveyfuncs
             memuse=get_size(thisone)
-            print("Memory usage: ", memuse)
+            #print("Memory usage: ", memuse)
             thisone.ip_record=overallcount #no of ips
             thisone.ip=j_content['ip'].strip() #get ip from json strcuture
             #print(thisone.ip)
             if 'writer' in j_content:
-                thisone.writer=j_content['writer'] #get writer
-            #try and get asn info for json line 
+                thisone.writer=j_content['writer'] 
+
             try:
                 asn=j_content['autonomous_system']['name'].lower()
-                #print(asn)
                 asndec=int(j_content['autonomous_system']['asn'])
-                #print(asndec)
                 thisone.asn=asn 
                 thisone.asndec=asndec
                 if country != 'XX' and j_content['location']['country_code'] != country:
@@ -148,8 +142,6 @@ else:
                     mm_setup()
                     mm_inited=True
                 asninfo=mm_info(thisone.ip)
-                #print(asninfo)
-                #print("fixing up asn info",asninfo)
                 thisone.asn=asninfo['asn']
                 thisone.asndec=asninfo['asndec']
                 if country != 'XX' and asninfo['cc'] != country:
@@ -158,24 +150,17 @@ else:
                     print (sys.stderr, "Bad country for ip",thisone.ip,"asn:",asninfo['cc'],"Asked for CC:",country)
                     j_content['wrong_country']=asninfo['cc']
                     badrec=True
-            #the ports 
+
             for pstr in portstrings:
-                thisone.analysis[pstr]={}
-            
-            #with open("jcontent.json", "w") as k:
-                #json.dump(j_content,k)               
+                thisone.analysis[pstr]={}           
     
             thisone.analysis['nameset']={}
             nameset=thisone.analysis['nameset']
 
             print("\nDoing analysis for ip: ", thisone.ip)
             try:
-                # getting name from reverse DNS
                 rdnsrec=socket.gethostbyaddr(thisone.ip)
-                #print(rdnsrec)
-                # name is first element in list
                 rdns=rdnsrec[0]
-                #print ("FQDN reverse: " + str(rdns))
                 nameset['rdns']=rdns
             except Exception as e: 
                 print (sys.stderr, "FQDN reverse exception " + str(e) + " for record:" + thisone.ip)
@@ -183,12 +168,9 @@ else:
                 pass
 
             # name from banner
-
             try:
                 p25=j_content['p25']
-                #print(p25['data'])
                 if thisone.writer=="FreshGrab.py":
-                    #print(p25['data']['smtp']['result'])
                     banner=p25['data']['smtp']['result']['banner'] #this matches the reverse dns (not all of them ofc) 
                 else:
                     banner=p25['smtp']['starttls']['banner'] 
@@ -242,9 +224,9 @@ else:
                         thisone.analysis['p22']['alg']=shk['algorithm']
 
                 else:
-                    #censys,io results - not using for now atleast?
-                    fp=j_content['p22']['ssh']['v2']['server_host_key']['fingerprint_sha256'] 
-                    shk=j_content['p22']['ssh']['v2']['server_host_key']
+                    #censys,io results - not using for now atleast - got new data
+                    fp=j_content['p22']['0']['ssh']['server_host_key']['fingerprint_sha256'] 
+                    shk=j_content['p22']['0']['ssh']['v2']['algorithim_selection']
                     if shk['key_algorithm']=='ssh-rsa':
                         thisone.analysis['p22']['rsalen']=shk['rsa_public_key']['length']
                     else:
@@ -280,7 +262,7 @@ else:
                     cert, fp = get_dets_email(data)
                     get_tls(thisone.writer,'p143',data,j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
-                    cert=j_content['p143']['pop3']['starttls']['tls']['certificate']
+                    cert=j_content['p143']['imap']['starttls']['tls']['certificate']
                     fp=j_content['p143']['imap']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     get_tls(thisone.writer,'p143',j_content['p143']['imap']['starttls']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
                 get_certnames('p143',cert,nameset)
@@ -297,7 +279,6 @@ else:
                     cert, fp = get_dets_http(data)
                     get_tls(thisone.writer,'p443',data,j_content['ip'],thisone.analysis['p443'],scandate)
                 else:
-                    #censys.io - not tested
                     fp=j_content['p443']['https']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
                     cert=j_content['p443']['https']['tls']['certificate']
                     #get_tls(thisone.writer,'p443',j_content['p443']['https']['tls'],j_content['ip'],thisone.analysis['p443'],scandate)
@@ -324,7 +305,7 @@ else:
                 print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
-            #port 993 - imaps - tested ok
+            #port 993 - imaps 
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p993']['data']['imap']['result']['tls']
@@ -419,9 +400,6 @@ else:
     keyf= open('all-key-fingerprints.json', 'w')
     keyf.write("[\n")
 
-###WORKS FINE UNTIL HERE##
-##section below works good but i need to verify the output to make sure. not understand it fully right now.
-###########################
 # might split this section into another file
 # it takes hella long to debug then
 # Tho, for now p443, p993, p22 outputs are good, rest we need to scan again.

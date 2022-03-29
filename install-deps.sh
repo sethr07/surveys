@@ -96,7 +96,8 @@ fi
 # zgrab2 stuff
 go get github.com/zmap/zgrab2
 cd $GOPATH/src/github.com/zmap/zgrab2
-go build
+# go build - wasn not working on my ubunut 18.04 for some reason. not sure why.
+make 
 # put it on PATH
 sudo ln -sf $HOME/go/src/github.com/zmap/zgrab/zgrab /usr/local/bin
 cd $starddir

@@ -98,10 +98,9 @@ if dov4:
     with open(v4file) as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         writer = csv.writer(of)
-        for row in readCSV:
-            if row[2]==country:
-                cidr = row[0]
-                print(of, cidr)
+        for _ in readCSV:
+            if _[2]==country:
+                cidr = _[0]
                 data = [cidr]
                 writer.writerow(data)
                 mc+=1
