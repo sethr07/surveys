@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # Copyright (C) 2018-2022 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,8 +19,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
-#set -x
+#
+# set -x
+#
+# Script that does all. Top level script.
+# Source Directory is from the code files will be runs.
+# Resuts Directory is where the results from scans,grab,mm collisions, graphs will be stored
+# Incase you want to continue a process use the pdir option. If there are files that match it will 
+# automatically skip the steps which are done.
+# Country is the country code you want to do the scans for
+# ipsrc is used when you already have a list of ips and do not need maxmind
+# zmap port is the port you will scan before the grab stage. Def = 25
+# Incase you want to skip a stage use -k. 
+#
 
 function whenisitagain()
 {
@@ -47,7 +58,7 @@ function usage()
 
 srcdir=$HOME/code/surveys
 country="IE"
-outdir=$HOME/data/smtp/runs
+outdir=$HOME/data/smtp/runs/
 ipssrc=''
 pdir=''
 domm='no'
@@ -55,7 +66,6 @@ dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{p
 mmdbdir=$HOME/$dpath
 zmport="25"
 skips=""
-
 
 # this form of assignment allows you to override this by setting an env
 # var of this name - usually I dislike this kind of opacity but in this
@@ -112,13 +122,12 @@ then
 fi
 
 # check if country is known
-cknown=`grep $country $mmdbdir/countrycodes.txt | awk -F, '{print $1}'`
+cknown=`grep $country $mmdbdir/countrycodes.csv | awk -F, '{print $1}'`
 if [[ "$country" != "$cknown" && "$country" != "XX" ]]
 then
 	echo "Country $country isn't known"
 	exit 87
 fi
-
 
 # place for results - might get changed by pdir
 resdir=$outdir/$country\-$NOW
@@ -257,6 +266,7 @@ fi
 
 # -1: IPs from maxmind, 0: zmap for port $zmport
 # if there's a "GRAB" telltale then don't do 
+# -1: IPs from MM
 if [ "$SKIP_MM" ]
 then
 	echo "Skipping maxmind"
@@ -267,11 +277,12 @@ else
 		echo "starting maxmind"
 		echo "starting maxmind" >>$logf
 		$srcdir/IPsFromMM.py -c $country >>$logf 2>&1 
-		echo "maxmind done"
-		echo "maxmind done" >>$logf
+		echo "Maxmind setup done. We have countrywise IPs"
+		echo "Maxmind done" >>$logf
 	fi
 fi
 
+# 0: Zmap step
 if [ "$SKIP_ZMAP" ]
 then
 	echo "Skipping zmap"
@@ -351,7 +362,7 @@ else
 
 fi
 
-# 2. Get Fresh data
+# 2. Get Fresh data using zgrab2
 if [ "$SKIP_FRESH" ]
 then
 	echo "Skipping fresh"
@@ -369,25 +380,31 @@ else
 	echo "Done getting fresh records" 
 	echo "Done getting fresh records" >>$logf 
 fi
+#testing ->
 
-# 3. Find clusters
+# 3. Find clusters 
 if [ "$SKIP_CLUSTER" ]
 then
 	echo "Skipping cluster"
 	echo "Skipping cluster" >>$logf
 else
+	cd1=`date +%s`
 	echo "Clustering records" 
 	echo "Clustering records" >>$logf 
-	# this takes a few minutes at least
+	# this will take a some times - a couple of hours
 	$srcdir/SameKeys.py -i $TELLTALE_FRESH -o $TELLTALE_CLUSTER -c $country >>$logf 2>&1 
+	cd2=`date +%s`
 	if [ "$?" != "0" ]
 	then
 		echo "Error ($?) from SameKeys.py"
 	fi
+	runtime=$cd2-$cd1
+	echo "runtime is: $runtime"
 	echo "Done clustering records" 
 	echo "Done clustering records" >>$logf 
 fi
-
+dir=`pwd`
+echo $dir
 # 4. Generate graphs/reports
 if [ "$SKIP_GRAPH" ]
 then
@@ -396,11 +413,10 @@ then
 else
 	echo "Graphing records" 
 	echo "Graphing records" >>$logf 
-	# this takes a few minutes at least
+	# this will take a some time - not a lot for now atleast
 	# with legend
-	# $srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -l -o . -c $country >>$logf 2>&1 
-	# without legend
-	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -o . -c $country >>$logf 2>&1 
+	$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -l -o . -g -c $country >>$logf 2>&1 	# without legend
+	#$srcdir/ReportReuse.py -f $TELLTALE_CLUSTER -a -o $resdir . -c $country >>$logf 2>&1 
 	if [ "$?" != "0" ]
 	then
 		echo "Error ($?) from ReportReuse.py"
@@ -410,10 +426,7 @@ else
 	echo "Done graphing records" 
 	echo "Done graphing records" >>$logf 
 fi
-#$srcdir/SameKeys.py $file >$NOW.out 2>&1 
 
 NOW=$(whenisitagain)
 echo "Overall Finished at $NOW" >>$logf
-
 cd $startdir
-
