@@ -1,5 +1,23 @@
 #!/usr/bin/python3
-
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 # Grabs IPs from GeoIPWhois.csv which is created using maxmind 
 # country and ipv4 network block databases. This script filters out
 # the network blocks according to the country provided.
@@ -80,10 +98,9 @@ if dov4:
     with open(v4file) as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         writer = csv.writer(of)
-        for row in readCSV:
-            if row[2]==country:
-                cidr = row[0]
-                print(of, cidr)
+        for _ in readCSV:
+            if _[2]==country:
+                cidr = _[0]
                 data = [cidr]
                 writer.writerow(data)
                 mc+=1
