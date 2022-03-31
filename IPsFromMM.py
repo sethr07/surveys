@@ -25,7 +25,6 @@
 
 import os, sys, argparse, tempfile, gc
 import csv
-import netaddr
 import socket
 
 # command line arg handling 
@@ -47,7 +46,7 @@ parser.add_argument('-c','--country',
                     help='file in which to put stderr output from zgrab')
 args=parser.parse_args()
 
-#default cases incase user does not provide custom inputs
+# default cases incase user does not provide custom inputs
 def_country="IE"
 def_indir=os.environ['HOME']+'/code/surveys/mmdb/'
 def_outfile="mm-ips."+def_country
@@ -98,9 +97,9 @@ if dov4:
     with open(v4file) as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         writer = csv.writer(of)
-        for _ in readCSV:
-            if _[2]==country:
-                cidr = _[0]
+        for row in readCSV:
+            if row[2]==country:
+                cidr = row[0]
                 data = [cidr]
                 writer.writerow(data)
                 mc+=1

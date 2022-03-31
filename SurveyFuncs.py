@@ -26,26 +26,19 @@ import json
 import ipaddress
 import csv
 import os, sys
+from socket import gethostbyaddr, gethostbyname
 from dateutil import parser as dparser 
 import jsonpickle
 import geoip2.database
 import graphviz as gv
 import gc
+import itertools
 
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
-    __slots__ = [   'writer',
-                    'ip_record',
-                    'ip',
-                    'asn',
-                    'asndec',
-                    'clusternum',
-                    'fprints',
-                    'csize',
-                    'nrcs',
-                    'rcs',
-                    'analysis']
+    __slots__ = ['writer','ip_record','ip','asn','asndec','clusternum','fprints','csize','nrcs','rcs','analysis']
+
     def __init__(self):
         self.writer='unknown'
         self.ip_record=-1 #no of ips
@@ -59,7 +52,10 @@ class OneFP():
         self.rcs={}
         self.analysis={}
 
+def printOneFP(f):
+    print (jsonpickle.encode(f))
 
+portstrings=['p22','p25','p110','p143','p443','p587','p993']
 
 # some "constants" for the above
 KEYTYPE_UNKNOWN=0           # initial value
@@ -71,7 +67,6 @@ KEYTYPE_ODD=5               # anything else
 KEYTYPE_ECDSA=6             # for those oddballs
 KEYTYPE_EDDSA=6             # for those oddballs, when they start to show
 KEYTYPE_OTHER=8             # if we do find something else, e.g. EDDSA
-
 # some "constants" for certs
 CERTTYPE_UNKNOWN=0          # initial value
 CERTTYPE_GOOD=1             # browser-trusted and timely
@@ -79,22 +74,16 @@ CERTTYPE_SC=2               # self-cert and timely
 CERTTYPE_EXPIRED=3          # browser-trusted but not timely
 CERTTYPE_SCEXPIRED=4        # self-cert but not timely
 CERTTYPE_OTHER=5            # oddbballs, don't expect any
-
-# A few certs have waaay too many sans (1500+), we're only bothering with this
-# many at most
-MAXSAN=100
-
-# try and get memory usage of class -> testing
+MAXSAN=100                  # A few certs have waaay too many sans (1500+), we're only bothering with this many at most
+##########################################
+# try and get memory usage of class 
 def get_size(obj, seen=None):
-    #Recursively finds size of objects
     size = sys.getsizeof(obj)
     if seen is None:
         seen = set()
     obj_id = id(obj)
     if obj_id in seen:
         return 0
-    # Important mark as seen *before* entering recursion to gracefully handle
-    # self-referential objects
     seen.add(obj_id)
     if isinstance(obj, dict):
         size += sum([get_size(v, seen) for v in obj.values()])
@@ -104,18 +93,11 @@ def get_size(obj, seen=None):
     elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
         size += sum([get_size(i, seen) for i in obj])
     return size
-
-
-portstrings=['p22','p25','p110','p143','p443','p587','p993']
-
-def printOneFP(f):
-    print (jsonpickle.encode(f))
-
-#############################3
-#graphing stuff
+#############################
+# Report Reuse Stuff
+#############################
 the_engine='sfdp'
 the_format='svg'
-
 # this is manually made symmetric around the diagonal
 # variant - make all the mail colours the same
 merged_nportscols=[ \
@@ -126,7 +108,6 @@ merged_nportscols=[ \
         'darkgray',  'violet', 'coral',  'darkkhaki', 'orange',      'darkseagreen', 'blue', \
         'turquoise', 'blue',   'blue',   'blue',      'blue',        'blue',         'blue',
         'magenta',   'blue',   'blue',   'blue',      'darkseagreen','blue',         'blue', ] 
-
 # new way - individual colours per port-pair  - this is manually made symmetric around the diagonal
 unmerged_nportscols=[ \
         'black',     'bisque',        'yellow',          'aquamarine', 'darkgray',     'turquoise',      'magenta', \
@@ -137,7 +118,6 @@ unmerged_nportscols=[ \
         'turquoise', 'wheat',         'yellowgreen',     'chocolate',  'cornsilk',     'deeppink',       'deepskyblue', \
         'magenta',   'brown',         'darkred',         'darksalmon', 'darkseagreen', 'deepskyblue',    'maroon', \
         ]
-
 # pick one of these - the first merges many mail port combos
 # leading to clearer graphs, the 2nd keeps all the details
 # nportscols=merged_nportscols
@@ -201,10 +181,7 @@ def printlegend():
 
 def asn2colour(asn):
     asni=int(asn)
-    if asni==0:
-        return '#A5A5A5'
-    else:
-        return '#' + "%06X" % (asni&0xffffff)
+    return '#A5A5A5' if asni==0 else '#' + "%06X" % (asni&0xffffff)
 
 def ip2int(ip):
     sip=ip.split(".")
@@ -223,30 +200,23 @@ def edgename(ip1,ip2):
     del int2
     return int3
 
-
-#############################
 def file_in_mem(fname):
-    if len(giantbuffer)==0: 
-        #print "Not loaded"
-        return False
-    else:
-        #print "Loaded"
-        return True
+    return len(giantbuffer) != 0
 
 def load_file_to_mem(fname):
     global giantbuffer
-    print (sys.stderr, "Reading " + fname + " into RAM")
+    print (sys.stderr, f"Reading {fname} into RAM")
     fp=open(fname)
     giantbuffer=fp.read()
     fp.close()
-    print >>sys.stderr, "Done reading " + fname + " into RAM"
+    print (sys.stderr, f"Done reading {fname} into RAM")
     print(len(giantbuffer))
 
 def readline_mem():
     global offset
     start_offset=offset
     if offset >= len(giantbuffer):
-        print (sys.stderr, "Offset "+str(offset)+" >= "+str(len(giantbuffer))+"!")
+        print(sys.stderr, f"Offset {str(offset)} >= {len(giantbuffer)}!")
         return ""
     while giantbuffer[offset]!='\n':
         offset += 1
@@ -327,20 +297,18 @@ def getnextfprint_mem(fname):
         return line
 
 ########################################
-#functions to make clusters
+# SameKeys.py Stuff
 ########################################
 #reutrns the port string depeing on the index. - tested ok
 def indexport(index):
     return portstrings[index]
-
 #returns the index depending upon the port name - tested ok
 def portindex(pname):
-    for pind in range(0,len(portstrings)):
+    for pind in range(len(portstrings)):
         if portstrings[pind]==pname:
             return pind
-    print (sys.stderr, "Error - unknown port: " + pname)
+    print(sys.stderr, f"Error - unknown port: {pname}")
     return -1
-
 #returns back new mask based on the two ports - not sure what is exactly happening tho
 def collmask(mask,k1,k2):
     try:
@@ -353,18 +321,15 @@ def collmask(mask,k1,k2):
         print (sys.stderr, "collmask exception, k1: " + k1 + " k2: " + k2 + " lp:" + str(lp) + " rp: " + str(rp) + " exception: " + str(e))  
         pass
     return newmask
-
 def expandmask(mask):
     emask=""
     intmask=int(mask,16)
     portcount=len(portstrings)
-    for i in range(0,portcount):
-        for j in range(0,portcount):
-            cmpmask = (1<<(j+8*i)) 
-            if intmask & cmpmask:
-                emask += indexport(i) + "==" + indexport(j) + ";"
+    for i, j in itertools.product(range(portcount), range(portcount)):
+        cmpmask = (1<<(j+8*i))
+        if intmask & cmpmask:
+            emask += f'{indexport(i)}=={indexport(j)};'
     return emask
-########################################
 ########################################
 # Stuff for reading fprints json file
 ########################################
@@ -482,8 +447,8 @@ def fqdn_bogon(dn):
     except:
         return True
     return False
-########################################
-###Stuff for parsing out info from zgrab2 output.
+
+# Stuff for parsing out info from zgrab2 output.
 # analyse the tls details - this ought work for other ports as
 # well as p25
 # scandate is needed to check if cert was expired at time of
@@ -495,26 +460,20 @@ def fqdn_bogon(dn):
 # tlsdets is where to store the data
 # scandate - when the scan was taken to verify tls certs
 def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
-    #print tls
     try:
         # we'll put each in a try/except to set true/false values
         # would chain work in browser
         # two flavours of TLS struct - one from Censys and one from local zgrabs
         # first is the local variant, 2nd censys.io
         if writer == 'FreshGrab.py':
-            # local
-            tlsdets['cipher_suite']=tls['handshake_log']['server_hello']['cipher_suite']['value'] # some int value
-            #print(tlsdets['cipher_suite'])
-            tlsdets['browser_trusted']=tls['handshake_log']['server_certificates']['validation']['browser_trusted'] # true or false
-            #print(tlsdets['browser_trusted'])
-            tlsdets['self_signed']=tls['handshake_log']['server_certificates']['certificate']['parsed']['signature']['self_signed'] #true or false
-            #print(tlsdets['self_signed'])
-            notbefore=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['start']) # start date
-            #print(notbefore)
-            notafter=dparser.parse(tls['handshake_log']['server_certificates']['certificate']['parsed']['validity']['end']) # end date
-            #print(notafter)
+            data_parsed = tls['handshake_log']['server_certificates']['certificate']['parsed']
+            tlsdets['cipher_suite']=tls['handshake_log']['server_hello']['cipher_suite']['value'] 
+            tlsdets['browser_trusted']=tls['handshake_log']['server_certificates']['validation']['browser_trusted'] 
+            tlsdets['self_signed']=data_parsed['signature']['self_signed'] 
+            notbefore=dparser.parse(data_parsed['validity']['start']) 
+            notafter=dparser.parse(data_parsed['validity']['end']) 
             try:
-                spki=tls['handshake_log']['server_certificates']['certificate']['parsed']['subject_key_info']
+                spki=data_parsed['subject_key_info']
                 if spki['key_algorithm']['name']=='RSA':
                     tlsdets['rsalen']=spki['rsa_public_key']['length']
                 elif spki['key_algorithm']['name']=='ECDSA':
@@ -525,7 +484,6 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
                 print(sys.stderr, "RSA exception for ip: " + ip + "spki:" + \
                                 str(tls['server_certificates']['certificate']['parsed']['subject_key_info']))
                 tlsdets['spkialg']="unknown"
-
         else:
             # censys.io - not tested
             tlsdets['cipher_suite']=int(tls['cipher_suite']['id'],16) 
@@ -562,7 +520,6 @@ def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
 # Extract a CN= from a DN, if present - moar curses on the X.500 namers!
 # mind you, X.500 names were set in stone in 1988 so it's a bit late. 
 # Pity we still use 'em though. 
-# not sure why are we using this - ask Prof.
 # dn = distinguished name
 def dn2cn(dn):
     try:
@@ -579,7 +536,7 @@ def dn2cn(dn):
         cnstr=dn[start_pos:end_pos]
         #print "dn2cn " + cnstr + " d: " + dn + " s: " + str(start_pos) + " e: " + str(end_pos) 
     except Exception as e: 
-        print (sys.stderr, "dn2cn exception " + str(e))
+        print (sys.stderr, f"dn2cn exception {str(e)}")
         return ''
     return cnstr
 
@@ -587,7 +544,7 @@ def get_certnames(portstring,cert,nameset):
     try:
         dn=cert['parsed']['subject_dn'] 
         dn_fqdn=dn2cn(dn)
-        nameset[portstring+'dn'] = dn_fqdn
+        nameset[f'{portstring}dn'] = dn_fqdn
     except Exception as e: 
         #print (sys.stderr, "FQDN dn exception " + str(e) + " for record:" + str(count))
         pass
@@ -598,10 +555,11 @@ def get_certnames(portstring,cert,nameset):
         # we ignore all non dns_names - there are very few in our data (maybe 145 / 12000)
         # and they're mostly otherName with opaque OID/value so not that useful. (A few
         # are emails but we'll skip 'em for now)
-        print ("FQDN san " + str(san_fqdns)) 
+        print (f"FQDN san {str(san_fqdns)}") 
         sancount=0
         for san in san_fqdns:
-            nameset[portstring+'san'+str(sancount)]=san_fqdns[sancount]
+            nameset[
+                +'san'+str(sancount)]=san_fqdns[sancount]
             sancount += 1
             # there are some CRAAAAAAZZZY huge certs out there - saw one with >1500 SANs
             # which slows us down loads, so we'll just max out at 20
@@ -616,58 +574,53 @@ def get_certnames(portstring,cert,nameset):
         pass
     return
 ########################################
-########################################
 # MaxMind Stuff 
 ########################################
 mmdbpath = 'code/surveys/mmdb/'
 mmdbdir = os.environ['HOME'] + '/' + mmdbpath
-
 #sets up API calls in mmdb directory
 def mm_setup():
     global asnreader
     global cityreader
     global countryreader
-    global countrycodes
-
-    #sets up the apis
-    asnreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-ASN.mmdb')
-    cityreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-City.mmdb')
-    countryreader = geoip2.database.Reader(mmdbdir + 'GeoLite2-Country.mmdb')
+    global countrycodes 
     countrycodes = []
 
-    #get country coes iso file 
-    with open(mmdbdir + 'countrycodes.csv') as ccf:
+    asnreader = geoip2.database.Reader(f'{mmdbdir}GeoLite2-ASN.mmdb')
+    cityreader = geoip2.database.Reader(f'{mmdbdir}GeoLite2-City.mmdb')
+    countryreader = geoip2.database.Reader(f'{mmdbdir}GeoLite2-Country.mmdb')
+
+    with open(f'{mmdbdir}countrycodes.csv') as ccf:
         lines=csv.reader(ccf)
-        for row in lines:
-            countrycodes.append(row)
+        countrycodes.extend(iter(lines))
         ccf.close
 
 #returns back the ip address information in the database
 def mm_info(ip):
-    rv = {}
-    rv['ip'] = ip
+    rv = {'ip': ip}
     try:
-        asnresponse = asnreader.asn(ip)
-        rv['asndec']=asnresponse.autonomous_system_number
-        rv['asn']=asnresponse.autonomous_system_organization
-        cityresponse=cityreader.city(ip)
-        countryresponse=countryreader.country(ip)
-        rv['lat']=cityresponse.location.latitude
-        rv['long']=cityresponse.location.longitude
-        print("\n\n")
-        rv['cc']=cityresponse.country.iso_code
-
-        if cityresponse.country.iso_code != countryresponse.country.iso_code:
-            rv['cc-city']=cityresponse.country.iso_code
-    
+        extract_from_mm(ip,rv)
     except Exception as e:
-        print(sys.stderr, "mm_info exception for: " + ip + str(e))
+        print(sys.stderr, f"mm_info exception for: {ip}{str(e)}")
         rv['asndec']='unknown'
         rv['asn']=-1
         rv['cc']='unknown'
         rv['cc-city']='unknown'
-    
     return rv
+
+def extract_from_mm(ip, rv):
+    asnresponse = asnreader.asn(ip)
+    rv['asndec']=asnresponse.autonomous_system_number
+    rv['asn']=asnresponse.autonomous_system_organization
+    cityresponse=cityreader.city(ip)
+    countryresponse=countryreader.country(ip)
+    rv['lat']=cityresponse.location.latitude
+    rv['long']=cityresponse.location.longitude
+    print("\n\n")
+    rv['cc']=cityresponse.country.iso_code
+
+    if cityresponse.country.iso_code != countryresponse.country.iso_code:
+        rv['cc-city']=cityresponse.country.iso_code
 
 #checks for ip against country using mmdb databases
 def mm_ipcc(ip, cc):
@@ -683,29 +636,53 @@ def mm_ipcc(ip, cc):
         else:
             return False
 
-#################
-# Creating some funcs to simply samekeys.py
+######################
+# test funcs for rdns and dns queries 
+# can make them for extensive 
+def get_rdns(ip):
+    try:
+        return gethostbyaddr(ip)[0]
+    except Exception as e:
+        print (sys.stderr, f"FQDN reverse exception {str(e)} for record:{ip}")
 
-# get all info for email prots as they have the same structure
-# ports: 25, 110, 143, 587, 993
-# idea: integrate with get_tls
+def get_dns(host):
+    return gethostbyname(host)
+
+def verify_names(name, ip):
+    if name != " " and not fqdn_bogon(name):
+        try:
+            rip = get_dns(name)
+        except Exception as e:
+            print(sys.stderr, "\nError making DNS query for: " + name + "for ip: " + ip + str(e))
+
+
+
+########################################
+# SameKeys.py - Some Funcs to parse out info from JSON strcutures
+# This is where the JSON headers should be updated if there are changes to 
+# the Zgrab output
+########################################
 def get_dets_email(data):
     cert = data['handshake_log']['server_certificates']['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
 
-# for ssh - tested ok
+def get_email_dets_cen(data):
+    cert = data['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256'] 
+    return cert, fp
+
 def get_dets_ssh(data):
-    #print("SSH test")
-    #print(data)
     shk = data['result']['key_exchange']['server_host_key']
     fp = shk['fingerprint_sha256']
     return shk, fp
 
-# tested ok 
 def get_dets_http(data):
     cert = data['handshake_log']['server_certificates']['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
 
-### 
+def get_dets_http_cen(data):
+    cert = data['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+    return cert,fp

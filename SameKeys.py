@@ -37,17 +37,15 @@ import jsonpickle
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
 from SurveyFuncs import *
-from memory_profiler import profile
-from guppy import hpy
-
-h = hpy()
-print(h)
+import cProfile, pstats
 
 #default values
 #indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
 #infile=indir+"records.fresh"
 infile="records.fresh"
 outfile="collisions.json"
+statfile = "memstats.txt"
+sf = open(statfile, "w")
 
 # command line arg handling 
 argparser=argparse.ArgumentParser(description='Scan records for collisions')
@@ -91,6 +89,7 @@ if args.outfile is not None:
     outfile=args.outfile
 
 # this is an array to hold the set of keys we find
+profiler = cProfile.Profile()
 fingerprints=[]
 overallcount=0
 badcount=0
@@ -114,22 +113,18 @@ if args.fpfile is not None:
         f=getnextfprint(fpf)
     fpf.close()
 else:
+    profiler.enable()
     bads={}
-    # keep track of how long this is taking per ip
-    peripaverage=0
+    peripaverage=0  #keep track of how long this is taking per ip
     with open(infile,'r') as f:
         for line in f:
             ipstart=time.time() 
             badrec=False
             j_content = json.loads(line) #one json structure per line
-            #print(j_content)
             somekey=False
             thisone=OneFP() # initialise class in surveyfuncs
-            memuse=get_size(thisone)
-            #print("Memory usage: ", memuse)
             thisone.ip_record=overallcount #no of ips
             thisone.ip=j_content['ip'].strip() #get ip from json strcuture
-            #print(thisone.ip)
             if 'writer' in j_content:
                 thisone.writer=j_content['writer'] 
 
@@ -165,16 +160,12 @@ else:
             nameset=thisone.analysis['nameset']
 
             print("\nDoing analysis for ip: ", thisone.ip)
-            try:
-                rdnsrec=socket.gethostbyaddr(thisone.ip)
-                rdns=rdnsrec[0]
-                nameset['rdns']=rdns
-            except Exception as e: 
-                print (sys.stderr, "FQDN reverse exception " + str(e) + " for record:" + thisone.ip)
-                #nameset['rdns']=''
-                pass
 
-            # name from banner
+            # get reverse dns for ip
+            rdns = get_rdns(thisone.ip)
+            nameset['rdns']=rdns
+            
+            # name from smtp banner
             try:
                 p25=j_content['p25']
                 if thisone.writer=="FreshGrab.py":
@@ -183,29 +174,23 @@ else:
                     banner=p25['smtp']['starttls']['banner'] 
                 
                 ts=banner.split()
-                #print(ts)
                 if ts[0]=="220":
                     banner_fqdn=ts[1]
-                    #print("fqdn banner: \n")
-                    #print(banner_fqdn)
                     nameset['banner']=banner_fqdn
                 #need to work this out ->    
                 elif ts[0].startswith("220-"):
                     #print("Starts with fqdn: \n")
                     banner_fqdn=ts[0][4:]
-                    #print(banner_fqdn)
                     nameset['banner']=banner_fqdn
             except Exception as e: 
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''  
-
-            # port 25 - gneed to double check output and integrate with function
+            # ssh info
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p25']['data']['smtp']['result']['tls']
                     cert, fp = get_dets_email(data)
                 else:
-                    # need toe edit - censys
                     tls=j_content['p25']['smtp']['starttls']['tls']
                     cert=tls['certificate']
                     
@@ -228,6 +213,7 @@ else:
                         thisone.analysis['p22']['alg']=shk['algorithm']
                 else:
                     # need toe edit - censys
+                    data = j_content['p22']['0']['ssh']
                     fp=j_content['p22']['0']['ssh']['server_host_key']['fingerprint_sha256'] 
                     shk=j_content['p22']['0']['ssh']['v2']['algorithim_selection']
                     if shk['key_algorithm']=='ssh-rsa':
@@ -246,10 +232,10 @@ else:
                     cert, fp = get_dets_email(data)
                     get_tls(thisone.writer,'p110',data,j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
-                    # need toe edit - censys
-                    fp=j_content['p110']['pop3']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256'] 
-                    cert=j_content['p110']['pop3']['starttls']['tls']['certificate']
-                    get_tls(thisone.writer,'p110',j_content['p110']['pop3']['starttls']['tls'],j_content['ip'],thisone.analysis['p110'],scandate)
+                    # not tested
+                    data = j_content['p110']['pop3']['starttls']['tls']
+                    cert, fp = get_email_dets_cen(data)
+                    get_tls(thisone.writer,'p110',data,j_content['ip'],thisone.analysis['p110'],scandate)
                 get_certnames('p110',cert,nameset)
                 thisone.fprints['p110']=fp
                 somekey=True
@@ -264,9 +250,9 @@ else:
                     get_tls(thisone.writer,'p143',data,j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
                 # need toe edit - censys
-                    cert=j_content['p143']['imap']['starttls']['tls']['certificate']
-                    fp=j_content['p143']['imap']['starttls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
-                    get_tls(thisone.writer,'p143',j_content['p143']['imap']['starttls']['tls'],j_content['ip'],thisone.analysis['p143'],scandate)
+                    data = j_content['p143']['imap']['starttls']['tls']
+                    cert, fp = get_email_dets_cen(data)
+                    get_tls(thisone.writer,'p143',data,j_content['ip'],thisone.analysis['p143'],scandate)
                 get_certnames('p143',cert,nameset)
                 thisone.fprints['p143']=fp
                 somekey=True
@@ -280,10 +266,9 @@ else:
                     cert, fp = get_dets_http(data)
                     get_tls(thisone.writer,'p443',data,j_content['ip'],thisone.analysis['p443'],scandate)
                 else:
-                    # need toe edit - censys
-                    fp=j_content['p443']['https']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
-                    cert=j_content['p443']['https']['tls']['certificate']
-                    get_tls(thisone.writer,'p443',j_content['p443']['https']['tls'],j_content['ip'],thisone.analysis['p443'],scandate)
+                    data = j_content['p443']['https']['tls']
+                    cert, fp = get_dets_http_cen(data)
+                    get_tls(thisone.writer,'p443',data,j_content['ip'],thisone.analysis['p443'],scandate)
                 get_certnames('p443',cert,nameset)
                 thisone.fprints['p443']=fp
                 somekey=True
@@ -312,9 +297,8 @@ else:
                     cert, fp = get_dets_email(data)
                     get_tls(thisone.writer,'p993',data,j_content['ip'],thisone.analysis['p993'],scandate)
                 else:
-                    # need toe edit - censys
-                    fp=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']['subject_key_info']['fingerprint_sha256']
-                    cert=j_content['p993']['imaps']['tls']['tls']['certificate']['parsed']
+                    data = j_content['p993']['imap']['starttls']['tls']
+                    cert, fp = get_email_dets_cen(data)
                     get_tls(thisone.writer,'p993',j_content['p993']['imaps']['tls']['tls'],j_content['ip'],thisone.analysis['p993'],scandate)
                 get_certnames('p993',cert,nameset)
                 thisone.fprints['p993']=fp
@@ -329,16 +313,15 @@ else:
             #try verify names a bit
             for k in nameset:
                 v=nameset[k]
-                #print("Printing V: ", v)
-                #print("checking: " + k + " " + v)
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
                     try:
-                        rip=socket.gethostbyname(v)
+                        rip = get_dns(v)
                         if rip == thisone.ip: #if it matches dns
                             besty.append(k)
                         else:
                             tmp[k+'-ip']=rip
+                            print("Not matched: ", rip)
                         # some name has an IP, even if not what we expect
                         nogood=False
                     except Exception as e: 
@@ -348,7 +331,7 @@ else:
 
             for k in tmp:
                 nameset[k]=tmp[k]
-                
+            
             nameset['allbad']=nogood
             nameset['besty']=besty
     
@@ -397,24 +380,29 @@ else:
     keyf= open('all-key-fingerprints.json', 'w')
     keyf.write("[\n")
 
+
+profiler.disable()
+stats = pstats.Stats(profiler).sort_stats('tottime')
+stats.print_stats()
+stats.dump_stats('stats2.dmp')
+
 # might split this section into another file
 # it takes hella long to debug then
 # do clusters 
 # end of fpfile is not None
-
-#find_clusters(fingerprints, keyf, args.fpfile)
+# identify 'em
 checkcount=0
 colcount=0
 mostcollisions=0
 biggestcollider=-1
-# identify 'em
 clusternum=0
 fl=len(fingerprints)
-#print("total fingerprints: ", fl)
+clustertime1 = time.time() #testing 
+
 for i in range(0,fl):
     r1=fingerprints[i] #first rec
     rec1=r1.ip_record
-    for j in range (i+1,fl):
+    for j in range(i+1,fl):
         r2=fingerprints[j] #next rec
         rec2=r2.ip_record
         r1r2coll=False # so we remember if there was one
@@ -492,8 +480,7 @@ if args.fpfile is None:
 colcount=0
 noncolcount=0
 accumcount=0
-h = hpy()
-print(h)
+
 # do clusters 
 clustersizes={}
 clustersizes[0]=0
@@ -512,6 +499,7 @@ cw = csv.writer(clusterf, lineterminator='\n')
 print(clusterf, "clusternum,size")
 csize_headers = ["clusternum", "size"]
 cw.writerow(csize_headers)
+
 for c in clustersizes:
     print (clusterf, str(c) + ", " + str(clustersizes[c]))
     csize=clustersizes[c]
@@ -574,8 +562,11 @@ colf.close()
 mergedclusternum=len(mergedclusternums)
 
 del fingerprints
+clustertime2 = time.time()
+ttime = clustertime2-clustertime1
 
-print (sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
+print("\nTotal time taken for clustering: ", ttime)
+print(sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
         "good: " + str(goodcount) + "\n\t" + \
         "bad: " + str(badcount) + "\n\t" + \
         "remote collisions: " + str(colcount) + "\n\t" + \

@@ -45,7 +45,7 @@ toobiggraph=10
 
 #NB:
 # need to test dir with skey-all.sh
-mkdir = "graphs"
+outdir = "graphs"
 
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
@@ -206,10 +206,7 @@ jsonpickle.set_encoder_options('json', sort_keys=True, indent=2)
 jsonpickle.set_encoder_options('simplejson', sort_keys=True, indent=2)
 
 def nfp():
-    if domem:
-        return getnextfprint_mem(fname)
-    else:
-        return getnextfprint(fp)
+    return getnextfprint_mem(fname) if domem else getnextfprint(fp)
 
 #f=getnextfprint(fp)
 f=nfp()

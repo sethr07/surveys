@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # grab just the IPs from a censys file 
 # or any other with one json structure per line and an 'ip' key in that dict
 
@@ -37,6 +38,7 @@ with open(args.infile,'r') as f:
     badcount=0
     for line in f:
         jthing=json.loads(line)
+        print(jthing)
         if 'ip' in jthing:
             ip=jthing['ip']
             out_f.write(ip+'\n')

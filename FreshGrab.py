@@ -72,9 +72,12 @@ if not os.access(zgrab_path,os.R_OK):
 
 # default country 
 def_country='IE'
-country=def_country
-if args.country is not None:
-    country=args.country
+
+country = args.country if args.country is not None else def_country
+
+#country=def_country
+#if args.country is not None:
+ #   country=args.country
 
 # default timeout for zgrab2, in seconds
 ztimeout=' -t 2' #2 secs
@@ -93,9 +96,13 @@ def usage():
     print (sys.stderr, "usage: " + sys.argv[0] + " -i <infile> -o <putfile> [-p <portlist>] [-s <sleepsecs>]")
     sys.exit(1)
 
-ports=defports
-if args.portstring is not None:
-    ports=args.portstring.split(",")
+print(sys.stderr, f"usage: {sys.argv[0]}" " -i <infile> -o <putfile> [-p <portlist>] [-s <sleepsecs>]")
+
+ports = args.portstring.split(",") if args.portstring is not None else defports
+
+#ports=defports
+#if args.portstring is not None:
+    #ports=args.portstring.split(",")
 
 if args.infile is None or args.outfile is None:
     usage()
