@@ -682,11 +682,8 @@ def get_dets_http(data):
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
 
-<<<<<<< HEAD
 def get_dets_http_cen(data):
     cert = data['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert,fp
-=======
 ### 
->>>>>>> refs/remotes/origin/rahul-01
