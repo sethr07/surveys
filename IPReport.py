@@ -75,19 +75,19 @@ if args.anonymise:
 
 # if this then just print legend
 if args.ipname is None and args.onename is None:
-    print "You need to supply a DNS name or file of IP addresses - exiting"
+    print ("You need to supply a DNS name or file of IP addresses - exiting")
     sys.exit(0)
 
 # checks - can we read outdir...
 try:
     if args.ipname is not None and not os.path.exists(args.ipname):
-        print >> sys.stderr, "Can't read IP file " + args.ipname + " - exiting:" 
+        print (sys.stderr, "Can't read IP file " + args.ipname + " - exiting:" )
         sys.exit(1)
     if not os.path.exists(args.parentdir):
-        print >> sys.stderr, "Can't find clusters directory " + args.parentdir + " - exiting:" 
+        print (sys.stderr, "Can't find clusters directory " + args.parentdir + " - exiting:")
         sys.exit(2)
 except:
-    print >> sys.stderr, "Exception checking inputs - exiting:" + str(e)
+    print (sys.stderr, "Exception checking inputs - exiting:" + str(e))
     sys.exit(3)
 
 # main line processing ...
@@ -122,13 +122,13 @@ elif args.onename is not None:
                 if str(ordata) not in ipstrings:
                     ipstrings.append(str(ordata))
     except Exception as e: 
-        print >>sys.stderr, "DNS exception ("+str(e)+") for name " + args.onename
+        print (sys.stderr, "DNS exception ("+str(e)+") for name " + args.onename)
 else: 
-    print "You need to supply a DNS name or file of IP addresses - exiting"
+    print ("You need to supply a DNS name or file of IP addresses - exiting")
     sys.exit(0)
 
 if len(ipstrings) == 0:
-    print "Found no IP addresses to check for - exiting"
+    print ("Found no IP addresses to check for - exiting")
     sys.exit(4)
 
 # loop counter for debug
@@ -164,11 +164,11 @@ dpattern=re.compile("[A-Z][A-Z]-201[89][0-9]+-[0-9]+")
 for subdir, dirs, files in os.walk(args.parentdir):
     basesubdir=os.path.basename(subdir)
     if not dpattern.match(basesubdir):
-        print >>sys.stderr, "Skipping " + subdir
+        print (sys.stderr, "Skipping " + subdir)
         continue
     for fname in files:
         if not cpattern.match(fname):
-            print >>sys.stderr, "Skipping " + subdir + "/ " + fname
+            print (sys.stderr, "Skipping " + subdir + "/ " + fname)
             continue
         fullname=subdir+"/"+fname
         print >>sys.stderr, "Opening " + fullname
@@ -193,8 +193,8 @@ for subdir, dirs, files in os.walk(args.parentdir):
                 now=datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
                 checkcount += 1
                 if checkcount % 100 == 0:
-                    print >> sys.stderr, "Reporting, fingerprints: " + str(checkcount) + " most recent cluster " + str(cnum) + \
-                        " at: " + str(now)
+                    print (sys.stderr, "Reporting, fingerprints: " + str(checkcount) + " most recent cluster " + str(cnum) + \
+                        " at: " + str(now))
                 if checkcount % 1000 == 0:
                     gc.collect()
     
@@ -202,29 +202,29 @@ for subdir, dirs, files in os.walk(args.parentdir):
                 del f
                 f=getnextfprint(fp)
         except Exception as e: 
-            print >>sys.stderr, "Decoding exception ("+str(e)+") reading file" + fname
+            print (sys.stderr, "Decoding exception ("+str(e)+") reading file" + fname)
             continue
 
-print "FPS:"
-print jsonpickle.encode(fps)
-print "Names:"
-print jsonpickle.encode(names)
-print "Cluster names:"
-print jsonpickle.encode(cnames)
+print ("FPS:")
+print (jsonpickle.encode(fps))
+print ("Names:")
+print (jsonpickle.encode(names))
+print ("Cluster names:")
+print (jsonpickle.encode(cnames))
 
 checkcount=0
 # now go back through all clusters to see if those FPs and/or names recur...
 for subdir, dirs, files in os.walk(args.parentdir):
     basesubdir=os.path.basename(subdir)
     if not dpattern.match(basesubdir):
-        print >>sys.stderr, "Skipping " + subdir
+        print (sys.stderr, "Skipping " + subdir)
         continue
     for fname in files:
         if not cpattern.match(fname):
-            print >>sys.stderr, "Skipping " + subdir + "/ " + fname
+            print (sys.stderr, "Skipping " + subdir + "/ " + fname)
             continue
         fullname=subdir+"/"+fname
-        print >>sys.stderr, "Opening " + fullname
+        print (sys.stderr, "Opening " + fullname)
         #if fullname in cnames:
             # see it already and we're bored with it:-)
             #continue
@@ -246,7 +246,7 @@ for subdir, dirs, files in os.walk(args.parentdir):
                         for port2 in f.fprints:
                             if f.fprints[port2]==fps[ip][port1]:
                                 match=True
-                                print >>sys.stderr, "FP match: " + f.fprints[port2] + "==" + fps[ip][port1]
+                                print (sys.stderr, "FP match: " + f.fprints[port2] + "==" + fps[ip][port1])
 
                 # any matching name
                 if not match:
@@ -287,17 +287,17 @@ for subdir, dirs, files in os.walk(args.parentdir):
             print >> sys.stderr, "Decoding exception 2nd time ("+str(e)+") reading file " + fname
             continue
 
-print "More matches:"
-print jsonpickle.encode(morematches)
-print "More cluster names:"
-print jsonpickle.encode(morecnames)
+print ("More matches:")
+print (jsonpickle.encode(morematches))
+print ("More cluster names:")
+print (jsonpickle.encode(morecnames))
 
-print "IPs"
+print ("IPs")
 for ip in fps:
-    print  ip
+    print(ip)
 for ip in morematches:
-    print ip
+    print(ip)
 
-print >> sys.stderr, "Done, fingerprints: " + str(checkcount) + " most recent cluster " + str(cnum) + \
-        " at: " + str(now)
+print (sys.stderr, "Done, fingerprints: " + str(checkcount) + " most recent cluster " + str(cnum) + \
+        " at: " + str(now))
 

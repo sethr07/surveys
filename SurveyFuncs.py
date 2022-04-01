@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from asyncore import write
 import profile
 import re
 import json
@@ -27,6 +28,7 @@ import ipaddress
 import csv
 import os, sys
 from socket import gethostbyaddr, gethostbyname
+from tkinter.font import names
 from dateutil import parser as dparser 
 import jsonpickle
 import geoip2.database
@@ -639,33 +641,32 @@ def mm_ipcc(ip, cc):
 ######################
 # test funcs for rdns and dns queries 
 # can make them for extensive 
-def get_rdns(ip):
+def get_rdns(ip, nameset):
     try:
-        return gethostbyaddr(ip)[0]
+        rdns = gethostbyaddr(ip)[0]
+        nameset['rdns'] = rdns
     except Exception as e:
         print (sys.stderr, f"FQDN reverse exception {str(e)} for record:{ip}")
 
-def get_dns(host):
-    return gethostbyname(host)
-
-def verify_names(name, ip):
-    if name != " " and not fqdn_bogon(name):
-        try:
-            rip = get_dns(name)
-        except Exception as e:
-            print(sys.stderr, "\nError making DNS query for: " + name + "for ip: " + ip + str(e))
-
-
+def get_dns(host,ip):
+    try:
+        return gethostbyname(host)
+    except Exception as e:
+        print (sys.stderr, f"Error making DNS query for {host} for ip:{ip} {str(e)}")
 
 ########################################
 # SameKeys.py - Some Funcs to parse out info from JSON strcutures
 # This is where the JSON headers should be updated if there are changes to 
 # the Zgrab output
 ########################################
-def get_dets_email(data):
-    cert = data['handshake_log']['server_certificates']['certificate']
-    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
-    return cert, fp
+def get_dets_email(data, banner):
+    if banner:
+        banner = data['data']['smtp']['result']['banner']
+        return banner
+    else:
+        cert = data['handshake_log']['server_certificates']['certificate']
+        fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+        return cert, fp
 
 def get_email_dets_cen(data):
     cert = data['certificate']

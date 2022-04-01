@@ -38,6 +38,7 @@ from dateutil import parser as dparser  # for parsing time from comand line and 
 import pytz # for adding back TZ info to allow comparisons
 from SurveyFuncs import *
 import cProfile, pstats
+from threading import Thread
 
 #default values
 #indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
@@ -160,26 +161,25 @@ else:
             nameset=thisone.analysis['nameset']
 
             print("\nDoing analysis for ip: ", thisone.ip)
-
             # get reverse dns for ip
-            rdns = get_rdns(thisone.ip)
-            nameset['rdns']=rdns
-            
+            #th = Thread(target=get_rdns(thisone.ip, nameset))
+            #th.start()
+            rdns = get_rdns(thisone.ip, nameset)
+            #nameset['rdns']=rdns            
             # name from smtp banner
             try:
                 p25=j_content['p25']
+                bn = "y"
                 if thisone.writer=="FreshGrab.py":
-                    banner=p25['data']['smtp']['result']['banner'] #this matches the reverse dns (not all of them ofc) 
+                    banner=get_dets_email(p25,bn)  
                 else:
                     banner=p25['smtp']['starttls']['banner'] 
-                
                 ts=banner.split()
                 if ts[0]=="220":
                     banner_fqdn=ts[1]
                     nameset['banner']=banner_fqdn
                 #need to work this out ->    
                 elif ts[0].startswith("220-"):
-                    #print("Starts with fqdn: \n")
                     banner_fqdn=ts[0][4:]
                     nameset['banner']=banner_fqdn
             except Exception as e: 
@@ -189,7 +189,7 @@ else:
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p25']['data']['smtp']['result']['tls']
-                    cert, fp = get_dets_email(data)
+                    cert, fp = get_dets_email(data, None)
                 else:
                     tls=j_content['p25']['smtp']['starttls']['tls']
                     cert=tls['certificate']
@@ -229,7 +229,7 @@ else:
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p110']['data']['pop3']['result']['tls']
-                    cert, fp = get_dets_email(data)
+                    cert, fp = get_dets_email(data,None)
                     get_tls(thisone.writer,'p110',data,j_content['ip'],thisone.analysis['p110'],scandate)
                 else:
                     # not tested
@@ -246,7 +246,7 @@ else:
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p143']['data']['imap']['result']['tls']
-                    cert, fp = get_dets_email(data)
+                    cert, fp = get_dets_email(data, None)
                     get_tls(thisone.writer,'p143',data,j_content['ip'],thisone.analysis['p143'],scandate)
                 else:
                 # need toe edit - censys
@@ -279,7 +279,7 @@ else:
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p587']['data']['smtp']['result']['tls']
-                    cert, fp = get_dets_email(data)
+                    cert, fp = get_dets_email(data, None)
                     get_tls(thisone.writer,'p587',data,j_content['ip'],thisone.analysis['p587'],scandate)
                     somekey=True
                     get_certnames('p587',cert,nameset)
@@ -294,7 +294,7 @@ else:
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p993']['data']['imap']['result']['tls']
-                    cert, fp = get_dets_email(data)
+                    cert, fp = get_dets_email(data, None)
                     get_tls(thisone.writer,'p993',data,j_content['ip'],thisone.analysis['p993'],scandate)
                 else:
                     data = j_content['p993']['imap']['starttls']['tls']
@@ -315,19 +315,14 @@ else:
                 v=nameset[k]
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
-                    try:
-                        rip = get_dns(v)
-                        if rip == thisone.ip: #if it matches dns
-                            besty.append(k)
-                        else:
-                            tmp[k+'-ip']=rip
-                            print("Not matched: ", rip)
+                    rip = get_dns(v, thisone.ip)
+                    if rip == thisone.ip: #if it matches dns
+                        besty.append(k)
+                    else:
+                        tmp[k+'-ip']=rip
+                        #print("Not matched: ", rip)
                         # some name has an IP, even if not what we expect
                         nogood=False
-                    except Exception as e: 
-                        #oddly, an NXDOMAIN seems to cause an exception, so these happen
-                        print (sys.stderr, "Error making DNS query for " + v + " for ip:" + thisone.ip + " " + str(e))
-                        pass
 
             for k in tmp:
                 nameset[k]=tmp[k]

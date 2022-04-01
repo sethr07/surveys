@@ -29,9 +29,9 @@ TOP="$HOME/data/smtp/runs"
 tot_mapped=0
 tot_p25s=0
 
-for rundir in $TOP/??-201[89]*
+for rundir in $TOP/IE-20220329-194902*
 do
-	for log in $rundir/201*.out
+	for log in $rundir/202*.out
 	do
 		runname=`basename $rundir`
 		twolines=`grep -B1 "zmap: completed" $log`

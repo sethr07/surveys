@@ -25,7 +25,8 @@
 
 import os, sys, argparse, tempfile, gc
 import csv
-import socket
+import time 
+
 
 # command line arg handling 
 parser=argparse.ArgumentParser(description='Write out IP ranges from the country in question')
@@ -87,26 +88,26 @@ if dov4 and nov4:
 if os.path.isfile(outfile) and not os.access(outfile,os.W_OK):
     print(sys.stderr, "Can't write onput file " + outfile + " - exiting")
     sys.exit(1)
-
 if dov4:
+    start = time.time()
     data = []
     lc=0 # lines count
     mc=0 # matching count
     v4outfile=outfile+".v4"
-    of=open(v4outfile,'w')
-    with open(v4file) as csvfile:
-        readCSV = csv.reader(csvfile, delimiter=',')
-        writer = csv.writer(of)
-        for row in readCSV:
-            if row[2]==country:
-                cidr = row[0]
-                data = [cidr]
-                writer.writerow(data)
-                mc+=1
-            lc+=1
-            if (lc%1000)==0:
-                print(sys.stderr, "v4: read " + str(lc) + " records, " + str(mc) + " matching")
-        of.close()
-    print(sys.stderr, "v4: read " + str(lc) + " records, " + str(mc) + " matching")
-
+    with open(v4outfile, "w") as of:
+        with open(v4file) as csvfile:
+            readCSV = csv.reader(csvfile, delimiter=',')
+            for row in readCSV:
+                if row[2]==country:
+                    cidr = row[0]
+                    data = [cidr]
+                    of.write(cidr)
+                    of.write("\n")
+                    mc+=1
+                lc+=1
+                if (lc%1000)==0:
+                    print(sys.stderr, "v4: read " + str(lc) + " records, " + str(mc) + " matching")
+        print(sys.stderr, "v4: read " + str(lc) + " records, " + str(mc) + " matching")
+    end = time.time()
+print("\nTotal time taken: ", (end-start))
 #maybe v6?
