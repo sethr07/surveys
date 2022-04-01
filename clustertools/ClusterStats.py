@@ -64,11 +64,11 @@ sys.path.insert(0,pdir)
 from SurveyFuncs import *
 
 def usage():
-    print 'Generate some cluster stats'
-    print 'usage: ' + sys.argv[0] + ' -i <filenames> [-l] [-t <collectivetablename>]'
-    print '    filenames must be space-sep (if >1) and enclosed in quotes on command line'
-    print '    -l means produce latex output'
-    print '    -t is needed for the table name if latex output chosen and >1 file input'
+    print ('Generate some cluster stats')
+    print ('usage: ' + sys.argv[0] + ' -i <filenames> [-l] [-t <collectivetablename>]')
+    print ('    filenames must be space-sep (if >1) and enclosed in quotes on command line')
+    print ('    -l means produce latex output')
+    print ('    -t is needed for the table name if latex output chosen and >1 file input')
     sys.exit(99)
 
 # command line arg handling 
@@ -99,9 +99,9 @@ checkcount=0
 
 fnames = args.fnames
 if not args.latex:
-    print >>sys.stderr, "Reading " + fnames
+    print (sys.stderr, "Reading " + fnames)
 else:
-    print >>sys.stderr, "Reading " + fnames
+    print (sys.stderr, "Reading " + fnames)
 
 cstats={}
 
@@ -146,8 +146,8 @@ for fname in fnames.split(' '):
 
         # not sure why I print this here but sure why not:-)
         if not args.latex:
-            print 'ClusterNumber:' + str(f.clusternum)
-            print 'ClusterSize:' + str(f.csize)
+            print ('ClusterNumber:' + str(f.clusternum))
+            print ('ClusterSize:' + str(f.csize))
 
         while f:
     
@@ -183,13 +183,13 @@ for fname in fnames.split(' '):
     
     
             except Exception as e: 
-                print >>sys.stderr, "Error with " + f.ip + " " + str(e)
+                print (sys.stderr, "Error with " + f.ip + " " + str(e))
                 pass
 
             # print something now and then to keep operator amused
             checkcount += 1
             if checkcount % 100 == 0:
-                print >> sys.stderr, "Counting browser-trusted stuff, host: " + str(checkcount) 
+                print (sys.stderr, "Counting browser-trusted stuff, host: " + str(checkcount))
             if checkcount % 1000 == 0:
                 gc.collect()
     
@@ -208,7 +208,7 @@ for fname in fnames.split(' '):
     
     kdiff = len(fpsseen)-(len(sshkeys)+len(tlskeys)) 
     if kdiff != 0:
-        print "odd #2keys, all=" + str(len(fpsseen)) + " ssh="+str(len(sshkeys))+ " tls="+str(len(tlskeys)) + " diff="+str(kdiff)
+        print ("odd #2keys, all=" + str(len(fpsseen)) + " ssh="+str(len(sshkeys))+ " tls="+str(len(tlskeys)) + " diff="+str(kdiff))
 
 
     cstats[sname]['asns']=len(asns)
@@ -222,15 +222,15 @@ for fname in fnames.split(' '):
     cstats[sname]['mostcommonkey']=mostcommonkey
 
     if not args.latex:
-        print "ASes: " + str(len(asns))
-        print "Ports: " + str(portcount)
-        print "SSHPorts: " +str(sshports)
-        print "SSHKeys : " +str(len(sshkeys))
-        print "TLSPorts: " +str(tlsports)
-        print "TLSKeys : " +str(len(tlskeys))
-        print "BTCerts : " +str(btcerts)
-        print "WCCerts : " +str(wccerts)
-        print "MaxKey: " + str(mostcommonkey)
+        print ("ASes: " + str(len(asns)))
+        print ("Ports: " + str(portcount))
+        print ("SSHPorts: " +str(sshports))
+        print ("SSHKeys : " +str(len(sshkeys)))
+        print ("TLSPorts: " +str(tlsports))
+        print ("TLSKeys : " +str(len(tlskeys)))
+        print ("BTCerts : " +str(btcerts))
+        print ("WCCerts : " +str(wccerts))
+        print ("MaxKey: " + str(mostcommonkey))
 
 totals={}
 totals['csize'] = 0
@@ -257,84 +257,84 @@ if len(fnames.split(' ')) > 1:
         totals['btcerts'] += cstats[k]['btcerts']
         totals['wccerts'] += cstats[k]['wccerts']
     if not args.latex:
-        print totals
+        print (totals)
 
 if args.latex:
     # dump out in latex happy form
     # print cstats
 
-    print '\\begin{table*}'
-    print '\\centering'
-    print '\caption{Summary of ' + args.tablab + ' clusters.}'
+    print ('\\begin{table*}')
+    print ('\\centering')
+    print ('\caption{Summary of ' + args.tablab + ' clusters.}')
 
     theline = '\\begin{tabular} { | l | '
     for k in cstats:
         theline += ' c | '
     theline += ' c | }' # last one for totals 
-    print theline + "\n\\hline"
+    print (theline + "\n\\hline")
 
     theline = "Name " 
     for k in cstats:
         theline += " & " + k
-    print theline + " & Total  \\\\ \hline"
-    print '\\hline'
+    print (theline + " & Total  \\\\ \hline")
+    print ('\\hline')
 
     theline = "IP addrs " 
     for k in cstats:
         theline += " & " + str(cstats[k]['csize'])
-    print theline + " & " + str(totals['csize']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['csize']) + " \\\\ \hline")
 
     theline = "ASes " 
     for k in cstats:
         theline += " & " + str(cstats[k]['asns'])
-    print theline + " & " + str(totals['asns']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['asns']) + " \\\\ \hline")
 
     theline = "Port count " 
     for k in cstats:
         theline += " & " + str(cstats[k]['portcount'])
-    print theline + " & " + str(totals['portcount']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['portcount']) + " \\\\ \hline")
 
     theline = "SSH ports " 
     for k in cstats:
         theline += " & " + str(cstats[k]['sshports'])
-    print theline + " & " + str(totals['sshports']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['sshports']) + " \\\\ \hline")
 
     theline = "SSH keys " 
     for k in cstats:
         theline += " & " + str(cstats[k]['sshkeys'])
-    print theline + " & " + str(totals['sshkeys']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['sshkeys']) + " \\\\ \hline")
 
     theline = "TLS ports " 
     for k in cstats:
         theline += " & " + str(cstats[k]['tlsports'])
-    print theline + " & " + str(totals['tlsports']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['tlsports']) + " \\\\ \hline")
 
     theline = "TLS Keys " 
     for k in cstats:
         theline += " & " + str(cstats[k]['tlskeys'])
-    print theline + " & " + str(totals['tlskeys']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['tlskeys']) + " \\\\ \hline")
 
     theline = "B-T certs " 
     for k in cstats:
         theline += " & " + str(cstats[k]['btcerts'])
-    print theline + " & " + str(totals['btcerts']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['btcerts']) + " \\\\ \hline")
 
     theline = "W/C certs " 
     for k in cstats:
         theline += " & " + str(cstats[k]['wccerts'])
-    print theline + " & " + str(totals['wccerts']) + " \\\\ \hline"
+    print (theline + " & " + str(totals['wccerts']) + " \\\\ \hline")
 
     theline = "Most key re-uses " 
     for k in cstats:
         theline += " & " + str(cstats[k]['mostcommonkey'])
-    print theline + " &  \\\\ \hline"
+    print (theline + " &  \\\\ \hline")
 
-    print '\\hline'
-    print '\end{tabular}'
-    print '\label{tab:'+args.tablab+'}'
-    print '\end{table*}'
+    print ('\\hline')
+    print ('\end{tabular}')
+    print ('\label{tab:'+args.tablab+'}')
+    print ('\end{table*}')
 
-    print 'Table \\ref{tab:'+args.tablab+'} summaries the clusters in ' + args.tablab + '.' 
+    print ('Table \\ref{tab:'+args.tablab+'} summaries the clusters in ' + args.tablab + '.')
 
 if not args.latex:
-    print "Overall:" + str(checkcount) 
+    print ("Overall:" + str(checkcount))

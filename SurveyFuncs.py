@@ -28,7 +28,6 @@ import ipaddress
 import csv
 import os, sys
 from socket import gethostbyaddr, gethostbyname
-from tkinter.font import names
 from dateutil import parser as dparser 
 import jsonpickle
 import geoip2.database
@@ -299,7 +298,7 @@ def getnextfprint_mem(fname):
         return line
 
 ########################################
-# SameKeys.py Stuff
+# Stuff for finding collisions
 ########################################
 #reutrns the port string depeing on the index. - tested ok
 def indexport(index):
@@ -417,7 +416,10 @@ def getnextfprint(fp):
         return onething
     else:
         return line
-
+########################################
+########################################
+# Data Analysis Stuff 
+########################################
 # check if supposed domain name is a bogon so as to avoid
 # doing e.g. DNS checks
 def fqdn_bogon(dn):
@@ -455,12 +457,6 @@ def fqdn_bogon(dn):
 # well as p25
 # scandate is needed to check if cert was expired at time of
 # scan
-# writer is local scans or censys.io
-# portstr is port no
-# tls is the tls structure for the port
-# ip is the address
-# tlsdets is where to store the data
-# scandate - when the scan was taken to verify tls certs
 def get_tls(writer,portstr,tls,ip,tlsdets,scandate):
     try:
         # we'll put each in a try/except to set true/false values
@@ -542,6 +538,19 @@ def dn2cn(dn):
         return ''
     return cnstr
 
+# checks number of sans for each port
+# stops if sans exceed MAXSAN
+def check_no_sans(sans, nameset):
+    count=0
+    for _ in sans:
+        nameset[+'san'+str(count)]=sans[count]
+        count += 1
+        if count > MAXSAN:
+            toobig = str(len(sans))
+            nameset['san'+str(count+1)]="Bollox-eoo-many-sans-1-" + toobig
+            print (sys.stderr, "Too many bleeding ( " + toobig + ") sans ")
+            break
+
 def get_certnames(portstring,cert,nameset):
     try:
         dn=cert['parsed']['subject_dn'] 
@@ -557,47 +566,72 @@ def get_certnames(portstring,cert,nameset):
         # we ignore all non dns_names - there are very few in our data (maybe 145 / 12000)
         # and they're mostly otherName with opaque OID/value so not that useful. (A few
         # are emails but we'll skip 'em for now)
-        print (f"FQDN san {str(san_fqdns)}") 
-        sancount=0
-        for san in san_fqdns:
-            nameset[
-                +'san'+str(sancount)]=san_fqdns[sancount]
-            sancount += 1
-            # there are some CRAAAAAAZZZY huge certs out there - saw one with >1500 SANs
-            # which slows us down loads, so we'll just max out at 20
-            if sancount >= MAXSAN:
-                toobig=str(len(san_fqdns))
-                nameset['san'+str(sancount+1)]="Bollox-eoo-many-sans-1-" + toobig
-                print (sys.stderr, "Too many bleeding ( " + toobig + ") sans ")
-                break
+        # print (f"FQDN san {str(san_fqdns)}") 
+        check_no_sans(san_fqdns,nameset)
     except Exception as e: 
         #these are v. common
         #print (sys.stderr, "FQDN san exception " + str(e) + " for record:" + str(count))
         pass
     return
+
+# Parses out smtp banner, fp and cert
+def get_dets_email(data, banner):
+    if banner:
+        banner = data['data']['smtp']['result']['banner']
+        ts = banner.split()
+        if ts[0] == "220":
+            banner_fqdn = ts[1]
+        elif ts[0].startswith("220-"):
+            banner_fqdn = ts[0][4:]
+        return banner_fqdn
+    else:
+        cert = data['handshake_log']['server_certificates']['certificate']
+        fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+        return cert, fp
+
+# Parses out smtp banner, fp and cert for censys data
+def get_email_dets_cen(data):
+    cert = data['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256'] 
+    return cert, fp
+
+# Parses out fp
+def get_dets_ssh(data):
+    shk = data['result']['key_exchange']['server_host_key']
+    fp = shk['fingerprint_sha256']
+    return shk, fp
+
+# Parses out shttps fp and cert
+def get_dets_http(data):
+    cert = data['handshake_log']['server_certificates']['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+    return cert, fp
+
+# Parses out shttps fp and cert for censys structure
+def get_dets_http_cen(data):
+    cert = data['certificate']
+    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
+    return cert,fp
 ########################################
 # MaxMind Stuff 
 ########################################
 mmdbpath = 'code/surveys/mmdb/'
 mmdbdir = os.environ['HOME'] + '/' + mmdbpath
-#sets up API calls in mmdb directory
+
 def mm_setup():
     global asnreader
     global cityreader
     global countryreader
     global countrycodes 
     countrycodes = []
-
     asnreader = geoip2.database.Reader(f'{mmdbdir}GeoLite2-ASN.mmdb')
     cityreader = geoip2.database.Reader(f'{mmdbdir}GeoLite2-City.mmdb')
     countryreader = geoip2.database.Reader(f'{mmdbdir}GeoLite2-Country.mmdb')
-
     with open(f'{mmdbdir}countrycodes.csv') as ccf:
         lines=csv.reader(ccf)
         countrycodes.extend(iter(lines))
         ccf.close
 
-#returns back the ip address information in the database
 def mm_info(ip):
     rv = {'ip': ip}
     try:
@@ -620,24 +654,14 @@ def extract_from_mm(ip, rv):
     rv['long']=cityresponse.location.longitude
     print("\n\n")
     rv['cc']=cityresponse.country.iso_code
-
     if cityresponse.country.iso_code != countryresponse.country.iso_code:
         rv['cc-city']=cityresponse.country.iso_code
 
-#checks for ip against country using mmdb databases
 def mm_ipcc(ip, cc):
-    theip=ip
-    #theip=ipaddress.IPv4Address(ip.decode('utf-8')) #throws errors for trial runs i did
     if cc == "XX":
         return True
-    else:
-        countryresponse = countryreader.country(theip)
-        #print(sys.stderr,"cr=",str(countryresponse),"ip=",ip,"cc=",cc)
-        if cc == countryresponse.country.iso_code:
-            return True
-        else:
-            return False
-
+    countryresponse = countryreader.country(ip)
+    return cc == countryresponse.country.iso_code
 ######################
 # test funcs for rdns and dns queries 
 # can make them for extensive 
@@ -655,36 +679,3 @@ def get_dns(host,ip):
         print (sys.stderr, f"Error making DNS query for {host} for ip:{ip} {str(e)}")
 
 ########################################
-# SameKeys.py - Some Funcs to parse out info from JSON strcutures
-# This is where the JSON headers should be updated if there are changes to 
-# the Zgrab output
-########################################
-def get_dets_email(data, banner):
-    if banner:
-        banner = data['data']['smtp']['result']['banner']
-        return banner
-    else:
-        cert = data['handshake_log']['server_certificates']['certificate']
-        fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
-        return cert, fp
-
-def get_email_dets_cen(data):
-    cert = data['certificate']
-    fp = cert['parsed']['subject_key_info']['fingerprint_sha256'] 
-    return cert, fp
-
-def get_dets_ssh(data):
-    shk = data['result']['key_exchange']['server_host_key']
-    fp = shk['fingerprint_sha256']
-    return shk, fp
-
-def get_dets_http(data):
-    cert = data['handshake_log']['server_certificates']['certificate']
-    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
-    return cert, fp
-
-def get_dets_http_cen(data):
-    cert = data['certificate']
-    fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
-    return cert,fp
-### 

@@ -47,7 +47,8 @@ then
     fi
 fi 
 
-srcdir=$HOME/code/surveys
+# edit dir path
+srcdir=$HOME/surveys
 infiles=$1
 if [[ "$infiles" == "" ]]
 then

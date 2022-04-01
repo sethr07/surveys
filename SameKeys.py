@@ -19,15 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# check who's re-using the same keys 
-# this script takes in the output from zgrab2 i.e. records.fresh
-# it will use a class instance per ip to store differnet informations we need to store
-# it will start out by creating a json structure for each line in the abobve line
-# it will then store info like ip, asn info if there otherwise it will use the mmdb funcs
-# Then for each port we the ip will go through try and catch statements for eahc port and store
-# info like fingerprints and certs in the data
-# each ip is also looked up and comapred using reverse dns to make sure it matches.
-
 import os, sys, argparse, tempfile, gc, re
 import profile
 import json
@@ -36,17 +27,13 @@ import time, datetime
 import jsonpickle 
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
-from SurveyFuncs import *
 import cProfile, pstats
 from threading import Thread
 
-#default values
-#indir=os.environ['HOME']+'/data/smtp/runs/IE-20220315-203316/' #for testing, will change after
-#infile=indir+"records.fresh"
+from SurveyFuncs import *
+
 infile="records.fresh"
 outfile="collisions.json"
-statfile = "memstats.txt"
-sf = open(statfile, "w")
 
 # command line arg handling 
 argparser=argparse.ArgumentParser(description='Scan records for collisions')
@@ -114,7 +101,6 @@ if args.fpfile is not None:
         f=getnextfprint(fpf)
     fpf.close()
 else:
-    profiler.enable()
     bads={}
     peripaverage=0  #keep track of how long this is taking per ip
     with open(infile,'r') as f:
@@ -161,9 +147,6 @@ else:
             nameset=thisone.analysis['nameset']
 
             print("\nDoing analysis for ip: ", thisone.ip)
-            # get reverse dns for ip
-            #th = Thread(target=get_rdns(thisone.ip, nameset))
-            #th.start()
             rdns = get_rdns(thisone.ip, nameset)
             #nameset['rdns']=rdns            
             # name from smtp banner
@@ -171,21 +154,14 @@ else:
                 p25=j_content['p25']
                 bn = "y"
                 if thisone.writer=="FreshGrab.py":
-                    banner=get_dets_email(p25,bn)  
+                    banner_fqdn=get_dets_email(p25,bn)  
                 else:
                     banner=p25['smtp']['starttls']['banner'] 
-                ts=banner.split()
-                if ts[0]=="220":
-                    banner_fqdn=ts[1]
-                    nameset['banner']=banner_fqdn
-                #need to work this out ->    
-                elif ts[0].startswith("220-"):
-                    banner_fqdn=ts[0][4:]
-                    nameset['banner']=banner_fqdn
+                nameset['banner']=banner_fqdn
             except Exception as e: 
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''  
-            # ssh info
+
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p25']['data']['smtp']['result']['tls']
@@ -199,7 +175,7 @@ else:
                 thisone.fprints['p25']=fp
                 somekey=True
             except Exception as e: 
-                print (sys.stderr, "p25 exception for:" + thisone.ip + ":" + str(e))
+                #print (sys.stderr, "p25 exception for:" + thisone.ip + ":" + str(e))
                 pass  
 
             try:
@@ -223,7 +199,7 @@ else:
                 thisone.fprints['p22']=fp
                 somekey=True
             except Exception as e: 
-                print(sys.stderr, "p22 exception  for:" + thisone.ip + ":" + str(e))
+                #print(sys.stderr, "p22 exception  for:" + thisone.ip + ":" + str(e))
                 pass
 
             try:
@@ -240,7 +216,7 @@ else:
                 thisone.fprints['p110']=fp
                 somekey=True
             except Exception as e: 
-                print(sys.stderr, "p110 exception for:" + thisone.ip + ":" + str(e))
+                #print(sys.stderr, "p110 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
             try:
@@ -257,7 +233,7 @@ else:
                 thisone.fprints['p143']=fp
                 somekey=True
             except Exception as e: 
-                print (sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e))
+                #print (sys.stderr, "p143 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
             try:
@@ -273,7 +249,7 @@ else:
                 thisone.fprints['p443']=fp
                 somekey=True
             except Exception as e: 
-                print(sys.stderr, "p443 exception for:" + thisone.ip + ":" + str(e))
+                #print(sys.stderr, "p443 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
             try:
@@ -288,7 +264,7 @@ else:
                     # censys.io has no p587 for now
                     pass
             except Exception as e: 
-                print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
+                #print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
             try:
@@ -304,7 +280,7 @@ else:
                 thisone.fprints['p993']=fp
                 somekey=True
             except Exception as e: 
-                print (sys.stderr, "p993 exception for:" + thisone.ip + ":" + str(e))
+                #print (sys.stderr, "p993 exception for:" + thisone.ip + ":" + str(e))
                 pass
             
             besty=[]
@@ -315,15 +291,18 @@ else:
                 v=nameset[k]
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
-                    rip = get_dns(v, thisone.ip)
-                    if rip == thisone.ip: #if it matches dns
-                        besty.append(k)
-                    else:
-                        tmp[k+'-ip']=rip
+                    try:
+                        rip = gethostbyname(v)
+                        if rip == thisone.ip: #if it matches dns
+                            besty.append(k)
+                        else:
+                            tmp[k+'-ip']=rip
                         #print("Not matched: ", rip)
                         # some name has an IP, even if not what we expect
                         nogood=False
-
+                    except Exception as e:
+                        print (sys.stderr, f"Error making DNS query for {v} for ip:{thisone.ip} {str(e)}")
+                        pass
             for k in tmp:
                 nameset[k]=tmp[k]
             
@@ -374,12 +353,6 @@ else:
     # this gets crapped on each time (for now)
     keyf= open('all-key-fingerprints.json', 'w')
     keyf.write("[\n")
-
-
-profiler.disable()
-stats = pstats.Stats(profiler).sort_stats('tottime')
-stats.print_stats()
-stats.dump_stats('stats2.dmp')
 
 # might split this section into another file
 # it takes hella long to debug then
