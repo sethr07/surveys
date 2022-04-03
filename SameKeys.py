@@ -20,15 +20,12 @@
 # THE SOFTWARE.
 #
 import os, sys, argparse, tempfile, gc, re
-import profile
 import json
 import socket
 import time, datetime
 import jsonpickle 
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
-import cProfile, pstats
-from threading import Thread
 
 from SurveyFuncs import *
 
@@ -77,7 +74,6 @@ if args.outfile is not None:
     outfile=args.outfile
 
 # this is an array to hold the set of keys we find
-profiler = cProfile.Profile()
 fingerprints=[]
 overallcount=0
 badcount=0
@@ -148,7 +144,7 @@ else:
 
             print("\nDoing analysis for ip: ", thisone.ip)
             rdns = get_rdns(thisone.ip, nameset)
-            #nameset['rdns']=rdns            
+
             # name from smtp banner
             try:
                 p25=j_content['p25']
@@ -161,7 +157,8 @@ else:
             except Exception as e: 
                 print (sys.stderr, "FQDN banner exception " + str(e) + " for record:" + str(overallcount) + " ip:" + thisone.ip)
                 nameset['banner']=''  
-
+            
+            # lets get the data for each port 
             try:
                 if thisone.writer=="FreshGrab.py":
                     data = j_content['p25']['data']['smtp']['result']['tls']
@@ -291,21 +288,16 @@ else:
                 v=nameset[k]
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
-                    try:
-                        rip = gethostbyname(v)
-                        if rip == thisone.ip: #if it matches dns
-                            besty.append(k)
-                        else:
-                            tmp[k+'-ip']=rip
-                        #print("Not matched: ", rip)
-                        # some name has an IP, even if not what we expect
+                    rip = get_dns_py(v, thisone.ip) # new dns func instead of socket 
+                    if rip == thisone.ip: #if it matches dns
+                        besty.append(k)
+                    else:
+                        tmp[k+'-ip']=rip
+                        #some name has an IP, even if not what we expect
                         nogood=False
-                    except Exception as e:
-                        print (sys.stderr, f"Error making DNS query for {v} for ip:{thisone.ip} {str(e)}")
-                        pass
             for k in tmp:
                 nameset[k]=tmp[k]
-            
+
             nameset['allbad']=nogood
             nameset['besty']=besty
     
@@ -354,8 +346,6 @@ else:
     keyf= open('all-key-fingerprints.json', 'w')
     keyf.write("[\n")
 
-# might split this section into another file
-# it takes hella long to debug then
 # do clusters 
 # end of fpfile is not None
 # identify 'em
@@ -365,7 +355,6 @@ mostcollisions=0
 biggestcollider=-1
 clusternum=0
 fl=len(fingerprints)
-clustertime1 = time.time() #testing 
 
 for i in range(0,fl):
     r1=fingerprints[i] #first rec
@@ -477,7 +466,7 @@ for c in clustersizes:
         histogram[clustersizes[c]]= histogram[clustersizes[c]]+1
     else:
         histogram[clustersizes[c]]=1
-#print (clusterf, "\n")
+
 print (clusterf, "clustersize,#clusters,collider")
 csize_headers2 = ["clustersize,#clusters,collider"]
 cw.writerow(csize_headers2)
@@ -528,12 +517,8 @@ except Exception as e:
 colf.write('\n]\n')
 colf.close()
 mergedclusternum=len(mergedclusternums)
-
 del fingerprints
-clustertime2 = time.time()
-ttime = clustertime2-clustertime1
 
-print("\nTotal time taken for clustering: ", ttime)
 print(sys.stderr, "\toverall: " + str(overallcount) + "\n\t" + \
         "good: " + str(goodcount) + "\n\t" + \
         "bad: " + str(badcount) + "\n\t" + \

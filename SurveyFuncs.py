@@ -34,8 +34,9 @@ import geoip2.database
 import graphviz as gv
 import gc
 import itertools
-
-
+import dns.resolver
+import dns.query
+ 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
     __slots__ = ['writer','ip_record','ip','asn','asndec','clusternum','fprints','csize','nrcs','rcs','analysis']
@@ -612,12 +613,12 @@ def get_dets_http_cen(data):
     cert = data['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert,fp
+
 ########################################
 # MaxMind Stuff 
 ########################################
 mmdbpath = 'code/surveys/mmdb/'
 mmdbdir = os.environ['HOME'] + '/' + mmdbpath
-
 def mm_setup():
     global asnreader
     global cityreader
@@ -677,5 +678,18 @@ def get_dns(host,ip):
         return gethostbyname(host)
     except Exception as e:
         print (sys.stderr, f"Error making DNS query for {host} for ip:{ip} {str(e)}")
+
+# Fast DNS options - might try multithreading with existing one.
+# definetily much quicker than socket - avg time/ip = 0.4s as compared to 3s with socket
+def get_dns_py(host, ip):
+    resolver = dns.resolver.Resolver()
+    resolver.timeout = 1
+    resolver.lifetime = 1
+    try:
+        ip = resolver.query(host, 'a')
+        for val in ip:
+            return val.to_text()
+    except Exception as e:
+        print(f"Error making DNS Query for {str(ip)}{str(e)}")
 
 ########################################
