@@ -46,9 +46,10 @@ toobiggraph=10
 #NB:
 # need to test dir with skey-all.sh
 outdir = "graphs"
-pdir=os.getcwd()
+pdir = os.getcwd()
 os.chdir(pdir)
 os.mkdir(outdir)
+os.chdir(outdir)
 
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
