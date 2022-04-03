@@ -46,11 +46,6 @@ toobiggraph=10
 #NB:
 # need to test dir with skey-all.sh
 outdir = "graphs"
-pdir = os.getcwd()
-os.chdir(pdir)
-os.mkdir(outdir)
-os.chdir(outdir)
-
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
     #print "Graphing cluster: " + str(cnum)
@@ -161,7 +156,6 @@ if not os.access(outdir,os.W_OK):
     sys.exit(1)
 
 # main line processing ...
-
 # we need to pass over all the fingerprints to make a graph for each
 # cluster, note that due to cluster merging (in SameKeys.py) we may
 # not see all cluster members as peers of the first cluster member
