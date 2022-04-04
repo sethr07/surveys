@@ -35,7 +35,7 @@ sudo apt-get -y upgrade
 sudo apt-get -y install wget
 sudo apt-get -y install git unzip
 
-#sudo apt-get -y install python3-pip
+sudo apt-get -y install python3-pip
 #sudo -H pip3 install pandas netaddr jsonpickle geoip2 graphviz pympler
 # better way install requirements
 pip3 install -r requirements.txt

@@ -46,7 +46,6 @@ toobiggraph=10
 #NB:
 # need to test dir with skey-all.sh
 outdir = "graphs"
-
 # graph rendering func
 def rendergraph(cnum,gvgraph,dynleg,legendwanted,odir,dorender):
     #print "Graphing cluster: " + str(cnum)
@@ -157,7 +156,6 @@ if not os.access(outdir,os.W_OK):
     sys.exit(1)
 
 # main line processing ...
-
 # we need to pass over all the fingerprints to make a graph for each
 # cluster, note that due to cluster merging (in SameKeys.py) we may
 # not see all cluster members as peers of the first cluster member
@@ -367,7 +365,7 @@ while f:
         del dynleg
 
     # print something now and then to keep operator amused
-    now=datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
     checkcount += 1
     if checkcount % 100 == 0:
         print (sys.stderr, "Creating graphs, fingerprint: " + str(checkcount) + " most recent cluster " + str(cnum) + \
