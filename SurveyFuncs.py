@@ -20,11 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from asyncore import write
-import profile
 import re
 import json
-import ipaddress
 import csv
 import os, sys
 from socket import gethostbyaddr, gethostbyname
@@ -32,11 +29,9 @@ from dateutil import parser as dparser
 import jsonpickle
 import geoip2.database
 import graphviz as gv
-import gc
 import itertools
 import dns.resolver
 import dns.query
-
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -133,9 +128,10 @@ unmerged_nportscols = [ \
 # nportscols=merged_nportscols
 nportscols = unmerged_nportscols
 
-
-# colours - return a list of logical-Or of port-specific colour settings
 def mask2colours(mask, colours, dynleg):
+    """
+    colours - return a list of logical-Or of port-specific colour settings
+    """
     intmask = int(mask, 16)
     portcount = len(portstrings)
     for i in range(0, portcount):
@@ -178,7 +174,9 @@ def mask2fewercolours(mask, colours, dynleg):
 
 
 def printlegend():
-    # make a fake graph with nodes for each port and coloured edges
+    """
+    print the legend for the graph
+    """
     leg = gv.Graph(format=the_format, engine='neato', name="legend")
     leg.attr('graph', splines='true')
     leg.attr('graph', overlap='false')
@@ -208,8 +206,9 @@ def ip2int(ip):
 
 
 def edgename(ip1, ip2):
-    # string form consumes more memory
-    # return ip1+"|"+ip2
+    """
+    Return a string that is a unique name for an edge between two IPs
+    """
     int1 = ip2int(ip1)
     int2 = ip2int(ip2)
     int3 = int2 * 2 ** 32 + int1
@@ -246,21 +245,22 @@ def readline_mem():
 
 
 def getnextfprint_mem(fname):
-    # as above, but first read entire file into memory and 
-    # handle it there
-    # read the next fingerprint from the file pointer
-    # fprint is a json structure, pretty-printed, so we'll
-    # read to the first line that's just an "{" until
-    # the next line that's just a "}"
-    # or...
-    # sometimes we might get one fp structure per line
-    # surrounded with a '[' at the top and a ']' at
-    # the end, in that case fps are separated with a 
-    # line containing a single comma, i.e. ",\n"
-    # the first thing on fp lines in such cases is
-    # '{"fprints":' so we'll take such a line as holding
-    # an entire json fp
-
+    """
+    as above, but first read entire file into memory and 
+    handle it there
+    read the next fingerprint from the file pointer
+    fprint is a json structure, pretty-printed, so we'll
+    read to the first line that's just an "{" until
+    the next line that's just a "}"
+    or... sometimes we might get one fp structure per line
+    surrounded with a '[' at the top and a ']' at
+    the end, in that case fps are separated with a 
+    line containing a single comma, i.e. ",\n"
+    the first thing on fp lines in such cases is
+    '{"fprints":' so we'll take such a line as holding
+     an entire json fp
+    """
+    
     if not file_in_mem(fname):
         load_file_to_mem(fname)
 
@@ -321,13 +321,16 @@ def getnextfprint_mem(fname):
 ########################################
 # Stuff for finding collisions
 ########################################
-# reutrns the port string depeing on the index. - tested ok
 def indexport(index):
+    """
+    Returns the port string for the given index.
+    """
     return portstrings[index]
 
-
-# returns the index depending upon the port name - tested ok
 def portindex(pname):
+    """
+    Returns the index of the port with the given name.
+    """
     for pind in range(len(portstrings)):
         if portstrings[pind] == pname:
             return pind
@@ -335,8 +338,10 @@ def portindex(pname):
     return -1
 
 
-# returns back new mask based on the two ports - not sure what is exactly happening tho
 def collmask(mask, k1, k2):
+    """
+    Returns the collision mask for the given two keys.
+    """
     try:
         lp = portindex(k1)
         rp = portindex(k2)
@@ -383,18 +388,19 @@ def j2o(jthing):
 
 
 def getnextfprint(fp):
-    # read the next fingerprint from the file pointer
-    # fprint is a json structure, pretty-printed, so we'll
-    # read to the first line that's just an "{" until
-    # the next line that's just a "}"
-    # or...
-    # sometimes we might get one fp structure per line
-    # surrounded with a '[' at the top and a ']' at
-    # the end, in that case fps are separated with a 
-    # line containing a single comma, i.e. ",\n"
-    # the first thing on fp lines in such cases is
-    # '{"fprints":' so we'll take such a line as holding
-    # an entire json fp
+    """
+    read the next fingerprint from the file pointer
+    fprint is a json structure, pretty-printed, so we'll
+    read to the first line that's just an "{" until
+    the next line that's just a "}"
+    or sometimes we might get one fp structure per line
+    surrounded with a '[' at the top and a ']' at
+    the end, in that case fps are separated with a 
+    line containing a single comma, i.e. ",\n"
+    the first thing on fp lines in such cases is
+    '{"fprints":' so we'll take such a line as holding
+    an entire json fp
+    """
     magicfpstrs = ['{"fprints":', \
                    '{"py/object": "SurveyFuncs.OneFP", "fprints":']
     line = fp.readline()
@@ -453,9 +459,11 @@ def getnextfprint(fp):
 ########################################
 # Data Analysis Stuff 
 ########################################
-# check if supposed domain name is a bogon so as to avoid
-# doing e.g. DNS checks
 def fqdn_bogon(dn):
+    """
+    check if supposed domain name is a bogon so as to avoid
+    doing e.g. DNS checks
+    """
     try:
         # if there are no dots, for us, it's bogus
         if dn.find('.') == -1:
@@ -486,11 +494,11 @@ def fqdn_bogon(dn):
     return False
 
 # Stuff for parsing out info from zgrab2 output.
-# analyse the tls details - this ought to work for other ports as
-# well as p25
-# scandate is needed to check if cert was expired at time of scan
-
 def check_cert_validity(before, after, scandate):
+    """
+    analyse the tls details - this ought to work for other ports as well 
+    as p25. Xcandate is needed to check if cert was expired at time of scan
+    """
     if before <= scandate < after:
         return True
     elif before > scandate or after < scandate:
@@ -500,11 +508,12 @@ def check_cert_validity(before, after, scandate):
 
 
 def get_tls(writer, portstr, tls, ip, tlsdets, scandate):
+    """
+     we'll put each in a try/except to set true/false values
+     would chain work in browser two flavours of TLS struct - one from Censys and one from local zgrabs
+     first is the local variant, 2nd censys.io
+    """
     try:
-        # we'll put each in a try/except to set true/false values
-        # would chain work in browser
-        # two flavours of TLS struct - one from Censys and one from local zgrabs
-        # first is the local variant, 2nd censys.io
         if writer == 'FreshGrab.py':
             data_parsed = tls['handshake_log']['server_certificates']['certificate']['parsed']
             tlsdets['cipher_suite'] = tls['handshake_log']['server_hello']['cipher_suite']['value']
@@ -553,11 +562,13 @@ def get_tls(writer, portstr, tls, ip, tlsdets, scandate):
     return True
 
 
-# Extract a CN= from a DN, if present - moar curses on the X.500 namers!
-# mind you, X.500 names were set in stone in 1988 so it's a bit late. 
-# Pity we still use 'em though. 
-# dn = distinguished name
 def dn2cn(dn):
+    """
+     Extract a CN= from a DN, if present - moar curses on the X.500 namers!
+     mind you, X.500 names were set in stone in 1988 so it's a bit late. 
+      Pity we still use 'em though. 
+      dn = distinguished name
+    """
     try:
         start_needle = "CN="
         start_pos = dn.find(start_needle)
@@ -577,9 +588,11 @@ def dn2cn(dn):
     return cnstr
 
 
-# checks number of sans for each port
-# stops if sans exceed MAXSAN
 def check_no_sans(sans, nameset):
+    """
+    checks number of sans for each port
+    stops if sans exceed MAXSAN
+    """
     count = 0
     for _ in sans:
         nameset[+'san' + str(count)] = sans[count]
@@ -615,8 +628,10 @@ def get_certnames(portstring, cert, nameset):
     return
 
 
-# Parses out smtp banner, fp and cert
 def get_p25(data, banner):
+    """
+    get p25 banner or datat depending on banner flag
+    """
     if banner:
         banner = data['data']['smtp']['result']['banner']
         ts = banner.split()
@@ -631,27 +646,37 @@ def get_p25(data, banner):
         return cert, fp
 
 
-# Parses out smtp banner, fp and cert for censys data
 def get_p25_cens(data):
+    """
+    get p25 censys data - not verified
+    """
     cert = data['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
 
 
-# Parses out fp
 def get_p22(data):
+    """
+    get p22 data
+    """
     shk = data['result']['key_exchange']['server_host_key']
     fp = shk['fingerprint_sha256']
     return shk, fp
 
 
 def get_p443(data):
+    """
+    get p443 data
+    """
     cert = data['handshake_log']['server_certificates']['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
 
 
 def get_p443_cens(data):
+    """
+    get p443 censys data - not verified
+    """
     cert = data['certificate']
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
@@ -665,6 +690,9 @@ mmdbdir = os.environ['HOME'] + '/' + mmdbpath
 
 
 def mm_setup():
+    """
+    setup maxmind db
+    """
     global asnreader
     global cityreader
     global countryreader
@@ -680,6 +708,9 @@ def mm_setup():
 
 
 def mm_info(ip):
+    """
+    get info about ip from maxmind db
+    """
     rv = {'ip': ip}
     try:
         extract_from_mm(ip, rv)
@@ -693,6 +724,9 @@ def mm_info(ip):
 
 
 def extract_from_mm(ip, rv):
+    """
+    extract info from maxmind db
+    """
     asnresponse = asnreader.asn(ip)
     rv['asndec'] = asnresponse.autonomous_system_number
     rv['asn'] = asnresponse.autonomous_system_organization
@@ -707,16 +741,19 @@ def extract_from_mm(ip, rv):
 
 
 def mm_ipcc(ip, cc):
+    """
+    cross check ip info from maxmind db
+    """
     if cc == "XX":
         return True
     countryresponse = countryreader.country(ip)
     return cc == countryresponse.country.iso_code
 
 
-######################
-# test funcs for rdns and dns queries 
-# can make them for extensive 
 def get_rdns(ip, nameset):
+    """
+    get reverse dns for ip
+    """
     try:
         rdns = gethostbyaddr(ip)[0]
         nameset['rdns'] = rdns
@@ -725,6 +762,9 @@ def get_rdns(ip, nameset):
 
 
 def get_dns(host, ip):
+    """
+    get dns for host
+    """
     try:
         return gethostbyname(host)
     except Exception as e:
