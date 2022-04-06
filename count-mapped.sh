@@ -51,3 +51,18 @@ ov_percent="0.$((tot_p25s*10000/tot_mapped))%"
 
 echo "Total: $tot_mapped mapped and $tot_p25s port25 listeners, being $ov_percent"
 
+# producing a graph 
+
+PYCMD=$(cat <<EOF
+from matplotlib import pyplot as plt
+from matplotlib import gridspec
+import numpy as np
+y = np.array([$tot_mapped, $tot_p25s])
+my_labels = ('Mapped IPs', 'Port 25 listeners')
+fig = plt.figure()
+plt.title('Mapped IPs and Port 25 listeners')
+plt.pie(y, labels=my_labels, autopct='%1.1f%%', shadow=True, startangle=90)
+plt.savefig('$TOP/mapped-p25.svg')
+EOF
+)
+python3 -c "$PYCMD"

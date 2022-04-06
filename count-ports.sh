@@ -44,7 +44,7 @@ declare -A empties_arr
 declare -A nonempties_arr
 declare -A dodgy_arr
 
-for rundir in $TOP/IE-20220329-194902
+for rundir in $TOP/??-202[89]*
 do
 	runname=`basename $rundir | awk -F'-' '{print $1"-"$2}'`
 	for port in $portstrings
@@ -55,7 +55,7 @@ do
 	done
 done
 
-for rundir in $TOP/IE-20220329-194902
+for rundir in $TOP/??-202[89]*
 do
 	runname=`basename $rundir | awk -F'-' '{print $1"-"$2}'`
 	echo "Checking $rundir"

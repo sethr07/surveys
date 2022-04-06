@@ -24,13 +24,11 @@
 
 # Find the clusters with the most re-used SSH key and the cluster
 # that the biggest  "pure" SSH cluster
-
 clusters=cluster*.json
 if [[ "$1" != "" ]]
 then
 	clusters=$1
 fi
-
 biggest=0
 bfl=""
 pure_biggest=0

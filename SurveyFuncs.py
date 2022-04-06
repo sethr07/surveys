@@ -493,10 +493,10 @@ def fqdn_bogon(dn):
 def check_cert_validity(before, after, scandate):
     if before <= scandate < after:
         return True
-    elif before > scandate:
+    elif before > scandate or after < scandate:
         return False
-    elif after < scandate:
-        return False
+    else:
+        return None
 
 
 def get_tls(writer, portstr, tls, ip, tlsdets, scandate):
@@ -525,7 +525,7 @@ def get_tls(writer, portstr, tls, ip, tlsdets, scandate):
                       str(tls['server_certificates']['certificate']['parsed']['subject_key_info']))
                 tlsdets['spkialg'] = "unknown"
         else:
-            # censys.io - not tested
+            # censys.io
             tlsdets['cipher_suite'] = int(tls['cipher_suite']['id'], 16)
             tlsdets['browser_trusted'] = tls['validation']['browser_trusted']
             tlsdets['self_signed'] = tls['certificate']['parsed']['signature']['self_signed']
@@ -546,7 +546,6 @@ def get_tls(writer, portstr, tls, ip, tlsdets, scandate):
                 tlsdets['spkialg'] = "unknown"
 
         tlsdets['timely'] = check_cert_validity(notbefore, notafter, scandate)
-
         # tlsdets['ip']=ip
     except Exception as e:
         print(sys.stderr, "get_tls exception for " + ip + ":" + portstr + str(e))
