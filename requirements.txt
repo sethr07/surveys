@@ -1,32 +1,16 @@
-# I had to comment out the ones commented below
-# It also seems wrong for you to specify the versions that
-# work on your one unique system
-# And lastly, one needs to minimise the list of dependencies
-# not try produce a maximal list (which'll never work)
-#brlapi==0.8.3
-cryptography~=36.0.2
-#cysimdjson==21.11
-#dbus-python==1.2.18
-#defer==1.0.6
-#distlib==0.3.4
-#distro==1.7.0
-#distro-info==1.1
-#duplicity==0.8.21
+cryptography==3.4.8
+more-itertools~=8.10.0
+python-dateutil~=2.8.1
+pytz~=2021.3
+requests~=2.25.1
+SecretStorage~=3.3.1
+six~=1.16.0
+xdg~=5
+xkit~=0.0.0
+zipp~=1.0.0
 geoip2~=4.5.0
 graphviz~=0.19.1
 jsonpickle~=2.1.0
-#launchpadlib==1.10.16
-#lazr.restfulclient==0.14.4
-#lazr.uri==1.0.6
-#lockfile==0.12.2
-#louis==3.20.0
-#python-apt==2.3.0+ubuntu1
-#python-dateutil==2.8.1
-#python-debian===0.1.43ubuntu1
-requests~=2.27.1
-#systemd-python==234
-#ubuntu-advantage-tools==27.7
-#virtualenv==20.13.0+ds
-#virtualenv-clone==0.3.0
-
 setuptools~=61.3.1
+pandas~=0.24.2
+pympler~=1.0.1
