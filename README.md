@@ -24,9 +24,7 @@ So far, I've only run this on various Ubuntu systems.
 
 - ```install-deps.sh``` is a first cut at an installer for dependencies
 - Then you need to select a list of IPv4 addresses, eiter from a previous
-run or from MaxMind for some country code, e.g. "IE". This script also runs the ```mm_update.sh``` script 
-that setups up the maxmind databases. To run this you need to register with maxmind and generate a key and 
-have a file in your $TOP directory called ```mm-key.txt``` containing the key from maxmind.
+run or from MaxMind for some country code, e.g. "IE". 
 - ```skey-all.sh``` is the script to orchestrate things
 - Most of the main code is the top directory of the repo for now. That
 includes the main python scripts as described below.
@@ -56,7 +54,9 @@ refer to it as ```$REPO``` as necessary below.
 		... lots of output ...
 
 1. Update the MaxMind database if it's been a while since you ran the install.
-   The latest databases for that are kept in the ```$REPO/mmdb/``` directory.
+   The latest databases for that are kept in the ```$REPO/mmdb/``` directory. To run this 
+   you need to register with maxmind and generate a key and  have a file in your $TOP directory 
+   called ```mm-key.txt``` containing the key from maxmind.
 
 		$ mm_update.sh
 		... lots of output ...
