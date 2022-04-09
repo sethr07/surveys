@@ -62,19 +62,19 @@ def usage():
     print >>sys.stderr, "    both inputs are mandatory and must differ"
 
 if args.infile is None:
-    print "You need to supply all inputs"
+    print ("You need to supply all inputs")
     usage()
 
 infile=args.infile
 
 if args.outfile is None:
-    print "You need to supply all inputs"
+    print ("You need to supply all inputs")
     usage()
 
 outfile=args.outfile
 
 if infile==outfile:
-    print "can't overwrite input with output"
+    print ("can't overwrite input with output")
     usage()
 
 def certsfromrf(ip,rf):
@@ -92,7 +92,7 @@ def certsfromrf(ip,rf):
             found=True
             break
     if not found:
-        print >>sys.stderr, "EEK - No sign of " + ip + " in records.fresh at offset " + str(rf.tell())
+        print (sys.stderr, "EEK - No sign of " + ip + " in records.fresh at offset " + str(rf.tell()))
         sys.exit(99)
     # decode the json for that ip
     j_content = json.loads(line)
@@ -121,13 +121,13 @@ def certsfromrf(ip,rf):
             pass
 
     if len(certs)==0:
-        print "EEK - Cen't find any certs for " + ip 
+        print ("EEK - Cen't find any certs for " + ip)
         if 'p443' in j_content:
-            print j_content['p443']
+            print(j_content['p443'])
         if 'p587' in j_content:
-            print j_content['p587']
+            print(j_content['p587'])
         if 'p993' in j_content:
-            print j_content['p993']
+            print(j_content['p993'])
         sys.exit(98)
     # we're done - return the cert
     return certs
@@ -183,8 +183,8 @@ def fix443names(f,rf):
                         break
             for elname in sans:
                 if elname != 'dns_names':
-                    print "SAN found with non dns_name for " + f.ip
-                    print "\t" + str(sans)
+                    print ("SAN found with non dns_name for " + f.ip)
+                    print ("\t" + str(sans))
                     break
     return True
 
@@ -220,8 +220,8 @@ while f:
     del bstr
 
     if overallcount % 100 == 0:
-        print >> sys.stderr, "Repairing colisions, did: " + str(overallcount) + \
-                " fixed: " + str(fixcount) 
+        print (sys.stderr, "Repairing colisions, did: " + str(overallcount) + \
+                " fixed: " + str(fixcount))
 
     f=getnextfprint(fp)
     overallcount += 1
@@ -231,6 +231,6 @@ rf.close()
 colf.write('\n]\n')
 colf.close()
 
-print >> sys.stderr, "Done epairing colisions, did: " + str(overallcount) + \
-                " fixed: " + str(fixcount)
+print  (sys.stderr, "Done repairing colisions, did: " + str(overallcount) + \
+                " fixed: " + str(fixcount))
 

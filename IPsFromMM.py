@@ -27,7 +27,6 @@ import os, sys, argparse, tempfile, gc
 import csv
 import time 
 
-
 # command line arg handling 
 parser=argparse.ArgumentParser(description='Write out IP ranges from the country in question')
 parser.add_argument('-i','--input-dir',     

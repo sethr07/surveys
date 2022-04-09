@@ -760,7 +760,8 @@ def get_rdns(ip, nameset):
     except Exception as e:
         print(sys.stderr, f"FQDN reverse exception {str(e)} for record:{ip}")
 
-
+# trying out with stubby + unbound 
+# did a test on two machines - this setup supposedely much faster
 def get_dns(host, ip):
     """
     get dns for host

@@ -50,15 +50,23 @@ parser.add_argument('-f','--file',
                     help='json file containing key fingerprints')
 args=parser.parse_args()
 
-if args.fname is None:
-    print ("No file provided. using default file.")
 
 def_file="all-key-fingerprints.json"
-if(def_file):
+
+if args.fname is None:
+    print ("No file provided. using default file.")
+elif def_file:
     args.fname = def_file
 else:
     print("No default file in curr dir.\n")
     sys.exit(0)
+
+
+#if(def_file):
+ #   args.fname = def_file
+#else:
+ #   print("No default file in curr dir.\n")
+  #  sys.exit(0)
 
 # main line processing ...
 # we need to pass over all the fingerprints to do our counts
@@ -93,11 +101,17 @@ while f:
 # close file
 fp.close()
 
-summary_fp=open("hpk_summary.txt","a+")
-summary_fp.write("hosts: " + str(hosts) + "\n" + \
+summary_file = "hpk_summary.txt"
+
+with open(summary_file, "a+") as fp:
+    fp.write("hosts: " + str(hosts) + "\n" + \
         "hostsports: " + str(hostsports) + "\n" + \
         "fps: " + str(len(fps_seen)))
-summary_fp.close()
+
+#summary_fp=open("hpk_summary.txt","a+")
+#summary_fp.write("hosts: " + str(hosts) + "\n" + \
+#        "hostsports: " + str(hostsports) + "\n" + \
+#        "fps: " + str(len(fps_seen)))
 
 print (sys.stderr, "hosts: " + str(hosts) + "\n" + \
         "hostsports: " + str(hostsports) + "\n" + \

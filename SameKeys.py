@@ -290,7 +290,7 @@ else:
                 v = nameset[k]
                 # see if we can verify the value as matching our give IP
                 if v != '' and not fqdn_bogon(v):
-                    rip = get_dns_py(v, thisone.ip)  # new dns func instead of socket
+                    rip = get_dns(v, thisone.ip)  # new dns func instead of socket
                     if rip == thisone.ip:  # if it matches dns
                         besty.append(k)
                     else:
