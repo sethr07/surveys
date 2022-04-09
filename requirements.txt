@@ -1,4 +1,4 @@
-cryptography==3.4.8
+cryptography~=3.4.8
 more-itertools~=8.10.0
 python-dateutil~=2.8.1
 pytz~=2021.3
@@ -12,5 +12,5 @@ geoip2~=4.5.0
 graphviz~=0.19.1
 jsonpickle~=2.1.0
 setuptools~=61.3.1
-pandas~=0.24.2
-pympler~=1.0.1
+pandas
+pympler
