@@ -38,7 +38,17 @@ sudo apt-get -y install git unzip
 sudo apt-get -y install python3-pip
 #sudo -H pip3 install pandas netaddr jsonpickle geoip2 graphviz pympler
 # better way install requirements
-pip3 install -r requirements.txt
+#pip3 install -r requirements.txt
+sudo -H pip3 install pandas
+sudo -H pip3 install graphviz
+sudo -H pip3 install geoip2
+sudo -H pip3 install jsonpickle
+sudo -H pip3 install datetime
+sudo -H pip3 install wordcloud
+sudo -H pip3 install crptography
+sudo -H pip3 install netaddr
+sudo -H pip3 install pympler
+sudo -H pip3 install python-dateutil
 
 if [ ! -d $HOME/code ]
 then
