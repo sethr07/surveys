@@ -1,21 +1,20 @@
 #!/usr/bin/python3
 """
 Script for DNS Comparasion Timings
+2 DNS Setups - 1. Default DNS on Ubunutu and 2. Stubby + Unbound
 """
 
-import os, sys
-import string
-from time import time
-from click import style 
 import matplotlib.pyplot as plt 
 import pandas as pd
 
-
-
+"""
+List to store and plot timings and time differences 
+"""
 times_old_setup = []
 times_new_setup = []
 no_ips = []
 
+# search string function inspired from stackoverflow
 def search_str(file_path, st, ip_list = None, time_list = None):
     if ip_list is None:
         ip_list = []
@@ -23,9 +22,7 @@ def search_str(file_path, st, ip_list = None, time_list = None):
         time_list = []
 
     with open(file_path, 'r') as file:
-        # read all content of a file
         content = file.readlines()
-        # check if string present in a file
         for line in content:
             if st in line:
                 data = line.split()
