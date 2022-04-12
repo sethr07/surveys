@@ -37,8 +37,11 @@ do
 		twolines=`grep -B1 "zmap: completed" $log`
 		if [[ "$twolines" != "" ]]
 		then
+			echo $twolines
 			mapped=`echo $twolines | awk '{print $6}'`
+			echo $mapped
 			p25s=`echo $twolines | awk '{print $12}'`
+			echo $p25s
 			percent=`echo $twolines | awk '{print $25}'`
 			echo "$runname: $mapped mapped and $p25s port25 listeners, being $percent"
 			tot_mapped=$((tot_mapped+mapped))

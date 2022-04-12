@@ -35,18 +35,17 @@ import dns.query
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
-    __slots__ = ['writer', 'ip_record', 'ip', 'asn', 'asndec', 'clusternum', 'fprints', 'csize', 'nrcs', 'rcs',
-                 'analysis']
+    __slots__ = ['writer', 'ip_record', 'ip', 'asn', 'asndec', 'clusternum', 'fprints', 'csize', 'nrcs', 'rcs', 'analysis']
 
     def __init__(self):
         self.writer = 'unknown'
-        self.ip_record = -1  # no of ips
-        self.ip = ''  # ip
-        self.asn = ''  # autonomous system info from mm
+        self.ip_record = -1  
+        self.ip = ''  
+        self.asn = ''  
         self.asndec = 0
-        self.clusternum = 0  # what cluster is it in
-        self.fprints = {}  # fingeprints for each port
-        self.csize = 1  # cluster size
+        self.clusternum = 0  
+        self.fprints = {}  
+        self.csize = 1  
         self.nrcs = 0
         self.rcs = {}
         self.analysis = {}
