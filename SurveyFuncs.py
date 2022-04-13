@@ -627,11 +627,11 @@ def get_certnames(portstring, cert, nameset):
     return
 
 
-def get_p25(data, banner):
+def get_mail_data(data, get_banner):
     """
-    get p25 banner or datat depending on banner flag
+    get email data or p25 banner
     """
-    if banner:
+    if get_banner:
         banner = data['data']['smtp']['result']['banner']
         ts = banner.split()
         if ts[0] == "220":
@@ -662,7 +662,7 @@ def get_p22(data):
     fp = shk['fingerprint_sha256']
     return shk, fp
 
-
+    
 def get_p443(data):
     """
     get p443 data
@@ -680,13 +680,32 @@ def get_p443_cens(data):
     fp = cert['parsed']['subject_key_info']['fingerprint_sha256']
     return cert, fp
 
+def get_rdns(ip, nameset):
+    """
+    get reverse dns for ip
+    """
+    try:
+        rdns = gethostbyaddr(ip)[0]
+        nameset['rdns'] = rdns
+    except Exception as e:
+        print(sys.stderr, f"FQDN reverse exception {str(e)} for record:{ip}")
+
+
+def get_dns(host, ip):
+    """
+    get dns for host
+    """
+    try:
+        return gethostbyname(host)
+    except Exception as e:
+        print(sys.stderr, f"Error making DNS query for {host} for ip:{ip} {str(e)}")
+
 
 ########################################
 # MaxMind Stuff 
 ########################################
 mmdbpath = 'code/surveys/mmdb/'
 mmdbdir = os.environ['HOME'] + '/' + mmdbpath
-
 
 def mm_setup():
     """
@@ -747,41 +766,4 @@ def mm_ipcc(ip, cc):
         return True
     countryresponse = countryreader.country(ip)
     return cc == countryresponse.country.iso_code
-
-
-def get_rdns(ip, nameset):
-    """
-    get reverse dns for ip
-    """
-    try:
-        rdns = gethostbyaddr(ip)[0]
-        nameset['rdns'] = rdns
-    except Exception as e:
-        print(sys.stderr, f"FQDN reverse exception {str(e)} for record:{ip}")
-
-# trying out with stubby + unbound 
-# did a test on two machines - this setup supposedely much faster
-def get_dns(host, ip):
-    """
-    get dns for host
-    """
-    try:
-        return gethostbyname(host)
-    except Exception as e:
-        print(sys.stderr, f"Error making DNS query for {host} for ip:{ip} {str(e)}")
-
-
-# Fast DNS options - might try multithreading with existing one.
-# definitely much quicker than socket - avg time/ip = 0.4s as compared to 3s with socket
-def get_dns_py(host, ip):
-    resolver = dns.resolver.Resolver()
-    resolver.timeout = 1
-    resolver.lifetime = 1
-    try:
-        ip = resolver.query(host, 'a')
-        for val in ip:
-            return val.to_text()
-    except Exception as e:
-        print(f"Error making DNS Query for {str(ip)}{str(e)}")
-
 ########################################

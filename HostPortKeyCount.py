@@ -26,21 +26,13 @@
 # TODO: fix this to work with fingerprints.json as well as all-key-fingerprints.json
 # but the latter is good enough!
 
-from asyncore import write
 import sys
-import os
-import tempfile
 import gc
-import copy
 import argparse
-
-from pympler import asizeof
-
 from SurveyFuncs import *
 
 # install via  "$ sudo pip install -U jsonpickle"
 #import jsonpickle
-
 
 # command line arg handling 
 parser=argparse.ArgumentParser(description=' Count the host/port combos and the number of actual keys found, from all hosts that do some crypto.\n \
@@ -51,29 +43,26 @@ parser.add_argument('-f','--file',
 args=parser.parse_args()
 
 
-def_file="all-key-fingerprints.json"
-
 if args.fname is None:
     print ("No file provided. using default file.")
-elif def_file:
-    args.fname = def_file
+
+if def_file := "all-key-fingerprints.json":
+     args.fname = def_file
 else:
-    print("No default file in curr dir.\n")
-    sys.exit(0)
+     print("No default file in curr dir.\n")
+     sys.exit(0)
 
 
-#if(def_file):
- #   args.fname = def_file
-#else:
- #   print("No default file in curr dir.\n")
-  #  sys.exit(0)
+"""
+main line processing 
+we need to pass over all the fingerprints to do our counts
+"""
 
-# main line processing ...
-# we need to pass over all the fingerprints to do our counts
 checkcount=0
 fps_seen=set()
 hostsports=0
 hosts=0
+
 # open file
 fp=open(args.fname,"r")
 
@@ -108,12 +97,8 @@ with open(summary_file, "a+") as fp:
         "hostsports: " + str(hostsports) + "\n" + \
         "fps: " + str(len(fps_seen)))
 
-#summary_fp=open("hpk_summary.txt","a+")
-#summary_fp.write("hosts: " + str(hosts) + "\n" + \
-#        "hostsports: " + str(hostsports) + "\n" + \
-#        "fps: " + str(len(fps_seen)))
 
-print (sys.stderr, "hosts: " + str(hosts) + "\n" + \
+print (sys.stderr, "\nhosts: " + str(hosts) + "\n" + \
         "hostsports: " + str(hostsports) + "\n" + \
         "fps: " + str(len(fps_seen)))
 

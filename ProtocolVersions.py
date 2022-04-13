@@ -244,13 +244,16 @@ with open(infile,'r') as f:
                     try:
                         prot = ""
                         if(pstr=="p25"):
-                            prot="smtp"
+                            prot=f'{smtp}'
                         if(pstr=="p110"):
                             prot="pop3"
                         if(pstr=="p143"):
                             prot="imap"
                         if(pstr=="p993"):
                             prot="imap"
+                        
+                        print(prot)
+
                         tls=j_content[pstr]['data'][prot]['result']['tls']['handshake_log']
                         ver=tls['server_hello']['version']['name']
                         # make sure we got an FP for that - sometimes we get protocol versions

@@ -150,9 +150,10 @@ else:
                 p25 = j_content['p25']
                 bn = "y"
                 if thisone.writer == "FreshGrab.py":
-                    banner_fqdn = get_p25(p25, bn)
+                    banner_fqdn = get_mail_data(p25, bn)
                 else:
                     banner = p25['smtp']['starttls']['banner']
+                
                 nameset['banner'] = banner_fqdn
             except Exception as e:
                 print(sys.stderr,
@@ -170,7 +171,6 @@ else:
                     else:
                         thisone.analysis['p22']['alg'] = shk['algorithm']
                 else:
-                    # need toe edit - censys
                     data = j_content['p22']['0']['ssh']
                     fp = j_content['p22']['0']['ssh']['server_host_key']['fingerprint_sha256']
                     shk = j_content['p22']['0']['ssh']['v2']['algorithim_selection']
@@ -187,7 +187,7 @@ else:
             try:
                 if thisone.writer == "FreshGrab.py":
                     data = j_content['p25']['data']['smtp']['result']['tls']
-                    cert, fp = get_p25(data, None)
+                    cert, fp = get_mail_data(data, None)
                 else:
                     tls = j_content['p25']['smtp']['starttls']['tls']
                     cert = tls['certificate']
@@ -203,13 +203,13 @@ else:
             try:
                 if thisone.writer == "FreshGrab.py":
                     data = j_content['p110']['data']['pop3']['result']['tls']
-                    cert, fp = get_p25(data, None)
+                    cert, fp = get_mail_data(data, None)
                     get_tls(thisone.writer, 'p110', data, j_content['ip'], thisone.analysis['p110'], scandate)
                 else:
-                    # not tested
                     data = j_content['p110']['pop3']['starttls']['tls']
                     cert, fp = get_p25_cens(data)
                     get_tls(thisone.writer, 'p110', data, j_content['ip'], thisone.analysis['p110'], scandate)
+
                 get_certnames('p110', cert, nameset)
                 thisone.fprints['p110'] = fp
                 somekey = True
@@ -220,13 +220,13 @@ else:
             try:
                 if thisone.writer == "FreshGrab.py":
                     data = j_content['p143']['data']['imap']['result']['tls']
-                    cert, fp = get_p25(data, None)
+                    cert, fp = get_mail_data(data, None)
                     get_tls(thisone.writer, 'p143', data, j_content['ip'], thisone.analysis['p143'], scandate)
                 else:
-                    # need toe edit - censys
                     data = j_content['p143']['imap']['starttls']['tls']
                     cert, fp = get_p25_cens(data)
                     get_tls(thisone.writer, 'p143', data, j_content['ip'], thisone.analysis['p143'], scandate)
+
                 get_certnames('p143', cert, nameset)
                 thisone.fprints['p143'] = fp
                 somekey = True
@@ -243,6 +243,7 @@ else:
                     data = j_content['p443']['https']['tls']
                     cert, fp = get_p443_cens(data)
                     get_tls(thisone.writer, 'p443', data, j_content['ip'], thisone.analysis['p443'], scandate)
+
                 get_certnames('p443', cert, nameset)
                 thisone.fprints['p443'] = fp
                 somekey = True
@@ -253,7 +254,7 @@ else:
             try:
                 if thisone.writer == "FreshGrab.py":
                     data = j_content['p587']['data']['smtp']['result']['tls']
-                    cert, fp = get_p25(data, None)
+                    cert, fp = get_mail_data(data, None)
                     get_tls(thisone.writer, 'p587', data, j_content['ip'], thisone.analysis['p587'], scandate)
                     somekey = True
                     get_certnames('p587', cert, nameset)
@@ -262,24 +263,24 @@ else:
                     # censys.io has no p587 for now
                     pass
             except Exception as e:
-                # print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
+                #print(sys.stderr, "p587 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
             try:
                 if thisone.writer == "FreshGrab.py":
                     data = j_content['p993']['data']['imap']['result']['tls']
-                    cert, fp = get_p25(data, None)
+                    cert, fp = get_mail_data(data, None)
                     get_tls(thisone.writer, 'p993', data, j_content['ip'], thisone.analysis['p993'], scandate)
                 else:
                     data = j_content['p993']['imap']['starttls']['tls']
                     cert, fp = get_p25_cens(data)
-                    get_tls(thisone.writer, 'p993', j_content['p993']['imaps']['tls']['tls'], j_content['ip'],
-                            thisone.analysis['p993'], scandate)
+                    get_tls(thisone.writer, 'p993', data, j_content['ip'],thisone.analysis['p993'], scandate)
+
                 get_certnames('p993', cert, nameset)
                 thisone.fprints['p993'] = fp
                 somekey = True
             except Exception as e:
-                # print (sys.stderr, "p993 exception for:" + thisone.ip + ":" + str(e))
+                #print (sys.stderr, "p993 exception for:" + thisone.ip + ":" + str(e))
                 pass
 
             besty = []
