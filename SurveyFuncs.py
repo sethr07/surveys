@@ -28,10 +28,7 @@ from socket import gethostbyaddr, gethostbyname
 from dateutil import parser as dparser
 import jsonpickle
 import geoip2.database
-import graphviz as gv
-import itertools
-import dns.resolver
-import dns.query
+import graphviz as g
 
 # using a class needs way less memory than random dicts apparently
 class OneFP():
@@ -699,6 +696,16 @@ def get_dns(host, ip):
         return gethostbyname(host)
     except Exception as e:
         print(sys.stderr, f"Error making DNS query for {host} for ip:{ip} {str(e)}")
+
+def prot_from_pstr(pstr):
+    prot = ''
+    if pstr in ['p25', 'p587']:
+        prot = 'smtp'
+    if pstr == 'p110':
+        prot = 'pop3'
+    if pstr in ['p143', 'p993']:
+        prot = 'imap'
+    return f"'{prot}'"
 
 
 ########################################

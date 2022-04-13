@@ -16,10 +16,11 @@ import jsonpickle # install via  "$ sudo pip install -U jsonpickle"
 import time, datetime
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz
-from SurveyFuncs import get_p22 # for adding back TZ info to allow comparisons
+# for adding back TZ info to allow comparisons
 
 # our own stuff
-from SurveyFuncs import *  
+from SurveyFuncs import *
+ 
 
 # counters, per port, per version 
 counters = {'o': {}, 'c': {}, 'nc': {}}
@@ -99,15 +100,15 @@ for line in df:
 print (sys.stderr, "Done reading dodgies, did: " + str(dodgycount))
 print (sys.stderr, "Number of ooc IPs: " + str(len(oocips)))
 
-fp=getnextfprint(cf)
+fp=getnextfprint(df)
 clcount=0
 while fp:
     clusterips.append(fp.ip)
     clcount+=1
     if clcount % 100 == 0:
         print (sys.stderr, "Reading cluster IPs, did: " + str(clcount))
-    fp=getnextfprint(cf)
-cf.close()
+    fp=getnextfprint(df)
+df.close()
 print (sys.stderr, "Number of non-cluster IPs: " + str(len(clusterips)))
 
 
@@ -185,3 +186,93 @@ with open(infile,'r') as f:
                     print (sys.stderr, "p22 exception " + str(e) + " ip:" + thisip)
                     pass
             elif pstr == 'p443':
+                try:
+                    data = j_content['p443']['data']['http']['result']['response']['request']['tls_log']
+                    ver = data['handshake_log']['server_hello']['version']['name']
+                    try:
+                        cert, fp = get_p443(data)
+                        #print >>sys.stderr, "IP3 : " + thisip + " incluster: " + str(incluster) 
+                        counterupdate(incluster,pstr,ver)
+                        somekey=True
+                        if ver not in tlsversions:
+                            tlsversions.append(ver)
+                    except Exception as e:
+                        tlsfpes+=1
+                        print (sys.stderr, pstr + "ver/FP exception #" + str(tlsfpes) + " " + str(e) + " ip:" + thisip)
+                except Exception as e:
+                    print (sys.stderr, pstr + "exception for:" + thisip + ":" + str(e))
+                    pass
+            else:
+                try:
+                    protocol = prot_from_pstr(pstr)
+                    print(protocol)
+                
+                    data = j_content[pstr]['data'][protocol]['tls']
+                    ver = data['handshake_log']['server_hello']['version']['name']
+                    """
+                    make sure we got an FP for that - sometimes we get protocol versions
+                    but don't get an FP, which skews the numbers. That can happen
+                    e.g. if something doesn't decode or whatever
+                    attempting to get this should cause an exception if it's not there
+                    """
+                    try:
+                        cert, fp = get_mail_data(data, None)
+                        #print (sys.stderr, "IP4 : " + thisip + " incluster: " + str(incluster))
+                        counterupdate(incluster,pstr,ver)
+                        if ver not in tlsversions:
+                            tlsversions.append(ver)
+                        somekey=True
+                    except Exception as e:
+                        tlsfpes+=1
+                        #print (sys.stderr, pstr + "ver/FP exception #" + str(tlsfpes) + " " + str(e) + " ip:" + thisip)
+                except Exception as e:
+                    #print (sys.stderr, pstr + "exception for:" + thisip + ":" + str(e))
+                    pass
+                
+        if somekey:
+            somekeycount+=1
+        #print (sys.stderr, "IP4 : " + thisip + " incluster: " + str(incluster)  + " somekey: " + str(somekey))
+        overallcount += 1
+        
+        # update average
+        ipend=time.time()
+        thistime=ipend-ipstart
+        peripaverage=((overallcount*peripaverage)+thistime)/(overallcount+1)
+        if overallcount % 100 == 0:
+            print (sys.stderr, "Reading versions, did: " + str(overallcount) + \
+                    " number with keys " + str(somekeycount) + \
+                    " ssh FP exceptions: " + str(sshfpes) + \
+                    " tls FP exceptions: " + str(tlsfpes) + \
+                    " most recent ip " + thisip + \
+                    " average time/ip: " + str(peripaverage) \
+                    + " last time: " + str(thistime))
+        del j_content
+    
+    gc.collect()
+    print (sys.stderr, "Done reading versions, did: " + str(overallcount) + \
+                        " number with keys " + str(somekeycount) + \
+                        " ssh FP exceptions: " + str(sshfpes) + \
+                        " tls FP exceptions: " + str(tlsfpes) + \
+                        " most recent ip " + thisip + \
+                        " average time/ip: " + str(peripaverage) \
+                        + " last time: " + str(thistime))
+    
+bstr=jsonpickle.encode(counters)
+print (sys.stderr, "Counters:\n" + bstr)
+
+ocounters={}
+# count tls versions overall
+for pstr in portstrings:
+    if pstr=='p22':
+        continue
+    else:
+        for ver in counters['o'][pstr]:
+            if ver not in ocounters:
+                ocounters[ver]=counters['o'][pstr][ver]
+            else:
+                ocounters[ver]=ocounters[ver]+counters['o'][pstr][ver]
+
+bstr=jsonpickle.encode(ocounters)
+print (sys.stderr, "Overall TLS Counters:\n" + bstr)
+                
+                
