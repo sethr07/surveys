@@ -167,7 +167,7 @@ for fname in args.fnames.split():
     # close file
     fp.close()
 
-print >>sys.stderr, "Overall:" + str(checkcount) 
+print (sys.stderr, "Overall:" + str(checkcount))
 
 #print "All fingerprints for port("+port+"):"
 #for fp in fpsdone:
