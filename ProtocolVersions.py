@@ -242,20 +242,11 @@ with open(infile,'r') as f:
                         pass
                 else:
                     try:
-                        prot = ""
-                        if(pstr=="p25"):
-                            prot=f'{smtp}'
-                        if(pstr=="p110"):
-                            prot="pop3"
-                        if(pstr=="p143"):
-                            prot="imap"
-                        if(pstr=="p993"):
-                            prot="imap"
-                        
+                        prot = prot_from_pstr(pstr)
                         print(prot)
-
                         tls=j_content[pstr]['data'][prot]['result']['tls']['handshake_log']
                         ver=tls['server_hello']['version']['name']
+                        print(ver)
                         # make sure we got an FP for that - sometimes we get protocol versions
                         # but don't get an FP, which skews the numbers. That can happen
                         # e.g. if something doesn't decode or whatever

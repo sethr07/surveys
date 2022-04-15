@@ -24,12 +24,12 @@
 
 # count how many IPs were zmap'd, how many p25 listeners and percentages
 
+# producing a graph 
 TOP="$HOME/data/smtp/runs"
-
 tot_mapped=0
 tot_p25s=0
 
-for rundir in $TOP/IE-20220329-194902*
+for rundir in $TOP/??-202*
 do
 	for log in $rundir/202*.out
 	do
@@ -37,11 +37,8 @@ do
 		twolines=`grep -B1 "zmap: completed" $log`
 		if [[ "$twolines" != "" ]]
 		then
-			echo $twolines
 			mapped=`echo $twolines | awk '{print $6}'`
-			echo $mapped
 			p25s=`echo $twolines | awk '{print $12}'`
-			echo $p25s
 			percent=`echo $twolines | awk '{print $25}'`
 			echo "$runname: $mapped mapped and $p25s port25 listeners, being $percent"
 			tot_mapped=$((tot_mapped+mapped))
@@ -51,21 +48,16 @@ do
 done
 
 ov_percent="0.$((tot_p25s*10000/tot_mapped))%"
-
 echo "Total: $tot_mapped mapped and $tot_p25s port25 listeners, being $ov_percent"
-
-# producing a graph 
-
 PYCMD=$(cat <<EOF
 from matplotlib import pyplot as plt
-from matplotlib import gridspec
 import numpy as np
 y = np.array([$tot_mapped, $tot_p25s])
 my_labels = ('Mapped IPs', 'Port 25 listeners')
 fig = plt.figure()
-plt.title('Mapped IPs and Port 25 listeners')
+plt.title('Mapped IPs and Port 25 listeners for $rundir')
 plt.pie(y, labels=my_labels, autopct='%1.1f%%', shadow=True, startangle=90)
-plt.savefig('$TOP/mapped-p25.svg')
+plt.savefig('$rundir/mapped-p25.svg')
 EOF
 )
 python3 -c "$PYCMD"

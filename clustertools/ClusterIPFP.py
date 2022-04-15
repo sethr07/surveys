@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -48,9 +48,9 @@ sys.path.insert(0,pdir)
 from SurveyFuncs import *
 
 def usage():
-    print "print just the IP and fp's for a cluster"
-    print 'usage: ' + sys.argv[0] + ' [-p port]  -i <cluster-file>'
-    print '   port defaults to all, can be csv list of ports e.g. "443,22"'
+    print ("print just the IP and fp's for a cluster")
+    print ('usage: ' + sys.argv[0] + ' [-p port]  -i <cluster-file>')
+    print ('port defaults to all, can be csv list of ports e.g. "443,22"')
     sys.exit(99)
 
 # command line arg handling 
@@ -70,11 +70,11 @@ if args.portcsv is not None and args.portcsv != 'all':
     for pnum in args.portcsv.split(","):
         port='p'+pnum
         if port not in portstrings:
-            print "Bad port csv: "+str(args.portcsv)
-            print "    only  22, 25, 110, 143, 443, 587, 993  allowed"
+            print ("Bad port csv: "+str(args.portcsv))
+            print ("only  22, 25, 110, 143, 443, 587, 993  allowed")
             sys.exit(1)
         ports2do.append(port)
-        
+    
     
 if args.fnames is None:
     usage()
@@ -86,7 +86,7 @@ if args.fnames is None:
 checkcount=0
 
 for fname in args.fnames.split():
-    print >>sys.stderr, "Reading " + fname
+    print (sys.stderr, "Reading " + fname)
 
     # open file
     #print fname
@@ -95,24 +95,24 @@ for fname in args.fnames.split():
 
     f=getnextfprint(fp)
     #print f
-    print "Starting " + fname + "(size: " + str(f.csize) + ") for " + str(ports2do)
+    print ("Starting " + fname + "(size: " + str(f.csize) + ") for " + str(ports2do))
     while f:
 
 
         try:
-            print "IP: " + f.ip + " fingerprints:" 
+            print ("IP: " + f.ip + " fingerprints:")
             for port in ports2do:
                 if port in f.fprints:
-                    print "\t",port, f.fprints[port]
+                    print ("\t",port, f.fprints[port])
 
         except Exception as e: 
-            print "Error with " + f.ip + " " + str(e)
+            print ("Error with " + f.ip + " " + str(e))
             pass
 
         # print something now and then to keep operator amused
         checkcount += 1
         if checkcount % 100 == 0:
-            print >> sys.stderr, "Counting browser-trusted stuff, host: " + str(checkcount) 
+            print (sys.stderr, "Counting browser-trusted stuff, host: " + str(checkcount))
         if checkcount % 1000 == 0:
             gc.collect()
 
@@ -121,4 +121,3 @@ for fname in args.fnames.split():
 
     # close file
     fp.close()
-

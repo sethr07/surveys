@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -49,10 +49,10 @@ sys.path.insert(0,pdir)
 from SurveyFuncs import *
 
 def usage():
-    print 'Count keys that are (a) re-used for given port and (b) are/aren\'t browser-trusted'
-    print 'and (c) where the x.509 names (DNs,SANs) are the same/differ'
-    print 'usage: ' + sys.argv[0] + ' -p <port> -i <space separated list of cluster files>'
-    print '   port defaults to 443'
+    print ('Count keys that are (a) re-used for given port and (b) are/aren\'t browser-trusted')
+    print ('and (c) where the x.509 names (DNs,SANs) are the same/differ')
+    print ('usage: ' + sys.argv[0] + ' -p <port> -i <space separated list of cluster files>')
+    print ('port defaults to 443')
     sys.exit(99)
 
 # command line arg handling 
@@ -69,10 +69,10 @@ port='p443'
 if args.port is not None:
     port='p'+args.port
     if port == 'p22':
-        print "Port 22 isn't allowed sorry:-)"
+        print ("Port 22 isn't allowed sorry:-)")
         sys.exit(1)
     if port not in portstrings:
-        print "Bad port ("+str(args.port)+") - only  25, 110, 143, 443, 587, 993  allowed"
+        print ("Bad port ("+str(args.port)+") - only  25, 110, 143, 443, 587, 993  allowed")
         sys.exit(1)
 
     
@@ -82,7 +82,7 @@ if args.fnames is None:
 
 # main line processing ...
 
-print "Starting for " + port
+print ("Starting for " + port)
 
 checkcount=0
 portcount=0
@@ -92,7 +92,7 @@ dnstr=port+'dn'
 sanstr=port+'san'
 
 for fname in args.fnames.split():
-    print >>sys.stderr, "Reading " + fname
+    print (sys.stderr, "Reading " + fname)
 
     # open file
     fp=open(fname,"r")
@@ -151,13 +151,13 @@ for fname in args.fnames.split():
                 fpsdone[thisfp].append(accum)
 
         except Exception as e: 
-            print "Error with " + f.ip + " " + str(e)
+            print ("Error with " + f.ip + " " + str(e))
             pass
 
         # print something now and then to keep operator amused
         checkcount += 1
         if checkcount % 100 == 0:
-            print >> sys.stderr, "Counting browser-trusted stuff, host: " + str(checkcount) 
+            print (sys.stderr, "Counting browser-trusted stuff, host: " + str(checkcount))
         if checkcount % 1000 == 0:
             gc.collect()
 
@@ -176,7 +176,7 @@ print >>sys.stderr, "Overall:" + str(checkcount)
         #print "    " + str(val)
 
 # see if there's any very dubious ones...
-print "Multi-hosted browser-trusted fingerprints for port("+port+"):"
+print ("Multi-hosted browser-trusted fingerprints for port("+port+"):")
 btcount=0
 wccount=0
 for fp in fpsdone:
@@ -198,7 +198,7 @@ for fp in fpsdone:
     if somebt:
         # maybe dodgy!!
         btcount += 1
-        print "key-fp: " + fp + " occurs " + str(lv) + " times:"
+        print ("key-fp: " + fp + " occurs " + str(lv) + " times:")
         firstone=True
         vcp=set()
         lastbt=True
@@ -209,7 +209,7 @@ for fp in fpsdone:
                 vcp=val['certnames']
                 lastbt=val['bt']
                 firstone=False
-                print "    " + str(val)
+                print ("    " + str(val))
                 #print vcp
             else:
                 #print vcp,val['certnames']
@@ -217,12 +217,12 @@ for fp in fpsdone:
                     somenamediff=True
                 if lastbt != val['bt']:
                     somebtchange=True
-                print "    " + str(val)
+                print ("    " + str(val))
                 vcp=val['certnames']
                 lastbt=val['bt']
         if somebtchange:
-            print "    EEK - BT change above" 
+            print ("    EEK - BT change above")
         if somenamediff:
-            print "    EEK - NameSet change from above"
+            print ("    EEK - NameSet change from above")
 
-print "browser-trusted-count: " + str(btcount) + " wildcard-count:" + str(wccount) + " out of " + str(portcount)
+print ("browser-trusted-count: " + str(btcount) + " wildcard-count:" + str(wccount) + " out of " + str(portcount))

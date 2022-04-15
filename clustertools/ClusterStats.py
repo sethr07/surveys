@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -58,8 +58,9 @@ import binascii
 from pympler import asizeof
 
 codedir=os.path.dirname(os.path.realpath(__file__))
+print(codedir)
 pdir=os.path.dirname(codedir)
-
+print(pdir)
 sys.path.insert(0,pdir)
 from SurveyFuncs import *
 

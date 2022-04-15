@@ -10,6 +10,7 @@ are not, within a cluster
 for that last, an initial step is to select the IPs from the 
 dodgy.json which are those not within clusters
 """
+from itertools import count
 import re, os, sys, argparse, tempfile, gc
 import json
 import jsonpickle # install via  "$ sudo pip install -U jsonpickle"
@@ -20,8 +21,8 @@ import pytz
 
 # our own stuff
 from SurveyFuncs import *
- 
-
+import pandas as pd 
+import matplotlib.pyplot as plt 
 # counters, per port, per version 
 counters = {'o': {}, 'c': {}, 'nc': {}}
 
@@ -204,10 +205,8 @@ with open(infile,'r') as f:
                     pass
             else:
                 try:
-                    protocol = prot_from_pstr(pstr)
-                    print(protocol)
-                
-                    data = j_content[pstr]['data'][protocol]['tls']
+                    protocol = prot_from_pstr(pstr)                
+                    data = j_content[pstr]['data'][protocol]['result']['tls']
                     ver = data['handshake_log']['server_hello']['version']['name']
                     """
                     make sure we got an FP for that - sometimes we get protocol versions
@@ -274,5 +273,49 @@ for pstr in portstrings:
 
 bstr=jsonpickle.encode(ocounters)
 print (sys.stderr, "Overall TLS Counters:\n" + bstr)
-                
-                
+
+# produce some latex table entry lines, for tls
+eotl=' \\\\ \\hline'
+# runname not working rn - need to check this out
+#print (runname + eotl)
+print (eotl)
+lineout= 'port ' 
+for ver in sorted(tlsversions):
+    lineout+= ' & ' + ver
+print (lineout + ' & Total ' + eotl)
+coltotal=0
+for pstr in portstrings:
+    if pstr=='p22':
+        continue
+    lineout= pstr
+    linetotal=0
+    for ver in sorted(tlsversions):
+        if ver not in counters['o'][pstr]:
+            lineout+= ' & 0 '
+        else:
+            lineout+= ' & ' + str(counters['o'][pstr][ver])
+            linetotal+= counters['o'][pstr][ver]
+
+    print (lineout + ' & ' + str(linetotal) + eotl)
+    coltotal+=linetotal
+lineout='Total ' 
+linetotal=0
+for ver in sorted(tlsversions):
+    lineout+= ' & ' + str(ocounters[ver]) 
+    linetotal += ocounters[ver]
+if linetotal != coltotal:
+    print (sys.stderr, "Totals mismatch!!!, cols (" + str(coltotal) + ") != last line (" + str(linetotal) + ")")
+print (lineout + ' & ' + str(linetotal) + eotl)
+
+    
+
+print(counters['o']['p22'])
+data = counters['o']['p22']
+names = list(data.keys())
+values = list(data.values())
+
+print(values)
+print(names)
+plt.title("SSH Versions")
+plt.bar(range(len(data)), values, tick_label=names)
+plt.savefig("/home/rs/sshvers.png")

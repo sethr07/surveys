@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -68,7 +68,7 @@ if args.country is not None:
     country=args.country
 # if this then just print legend
 if args.fname is None:
-    print args
+    print (args)
     sys.exit(0)
 now=datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 nowstr=str(now).replace(" ","T")
@@ -80,7 +80,7 @@ defsleep=0.1
 sleepval=defsleep
 if args.sleepsecs is not None:
     sleepval=float(args.sleepsecs)
-    print >>out_f, "Will sleep for " + str(sleepval) + " seconds between openssl s_client calls"
+    print (out_f, "Will sleep for " + str(sleepval) + " seconds between openssl s_client calls")
 
 # TODO: lots of overlap with ../CheckTLSPPort.py - re-factor later when we know more
 
@@ -115,13 +115,13 @@ opensslpno={
         }
 
 def gettlscertstr(ip,portstr):
-    certstr=""
+    certstr = ""
     #print >> sys.stdout,'Doing gettlsserverkey '+ip+portstr
     try:
-        cmd=opensslcmd[portstr] + ' ' + ip +':'+ str(opensslpno[portstr]) + ' ' + opensslparms[portstr] 
+        cmd = opensslcmd[portstr] + ' ' + ip +':'+ str(opensslpno[portstr]) + ' ' + opensslparms[portstr] 
         #print "***|" + cmd + "|***"
         proc=subprocess.Popen(cmd.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        print "Sleepin for ",sleepval
+        print ("Sleepin for ",sleepval)
         time.sleep(sleepval)
         pc=proc.communicate()
         lines=pc[0].split('\n')
@@ -137,7 +137,7 @@ def gettlscertstr(ip,portstr):
                 pem_data += lines[x] + '\n'
         #print pem_data
         #cert = x509.load_pem_x509_certificate(pem_data, default_backend())
-        cmd='openssl x509 -noout -text'
+        cmd = 'openssl x509 -noout -text'
         proc_hash=subprocess.Popen(cmd.split(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=None)
         pc=proc_hash.communicate(input=pem_data)
         return pc[0]
@@ -153,29 +153,29 @@ def gettlscertstr(ip,portstr):
 # cert for each one
 
 try: 
-    outf=open(outfile,"w")
+    outf = open(outfile,"w")
 except:
-    print >> sys.stderr, "Can't open " + outfile + " - exiting"
+    print (sys.stderr, "Can't open " + outfile + " - exiting")
     sys.exit(1)
 
 checkcount=0
 
 # open file
-fp=open(args.fname,"r")
+fp = open(args.fname,"r")
 
 jsonpickle.set_encoder_options('json', sort_keys=True, indent=2)
-f=getnextfprint(fp)
+f = getnextfprint(fp)
 while f:
 
     for port in f.fprints:
-        print >> outf, "Doing",f.ip,port,f.analysis[port]
+        print (outf, "Doing",f.ip,port,f.analysis[port])
         certstr=gettlscertstr(f.ip,port)
-        print >> outf, certstr
+        print (outf, certstr)
 
     # print something now and then to keep operator amused
     checkcount += 1
     if checkcount % 100 == 0:
-        print >> sys.stderr, "Creating graphs, fingerprint: " + str(checkcount) 
+        print (sys.stderr, "Creating graphs, fingerprint: " + str(checkcount))
     if checkcount % 1000 == 0:
         gc.collect()
 

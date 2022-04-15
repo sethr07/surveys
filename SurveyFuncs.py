@@ -624,6 +624,39 @@ def get_certnames(portstring, cert, nameset):
     return
 
 
+def name_bogon(dn):
+    """
+    check if name is a bogon so as to avoid
+    doing e.g. DNS checks, this is a little different
+    from the fqdn check above
+    """
+    
+    try:
+        # if it ends-with "localhost" it's bogus
+        if dn.endswith("localhost"):
+            return True
+        if dn.endswith(".internal"):
+            return True
+        # if it ends-with ".example.com" it's bogus
+        if dn.endswith("example.com"):
+            return True
+        # if it ends-with ".localdomain" it's bogus
+        if dn.endswith(".localdomain"):
+            return True
+        # if it ends-with ".local" it's bogus
+        if dn.endswith(".local"):
+            return True
+        # if it ends-with ".arpa" it's bogus
+        if dn.endswith(".arpa"):
+            return True
+        # if it's ESMTP it's bogus
+        if dn == "ESMTP":
+            return True
+    except:
+        return True
+    return False
+
+
 def get_mail_data(data, get_banner):
     """
     get email data or p25 banner
@@ -705,7 +738,7 @@ def prot_from_pstr(pstr):
         prot = 'pop3'
     if pstr in ['p143', 'p993']:
         prot = 'imap'
-    return f"'{prot}'"
+    return prot 
 
 
 ########################################

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -48,8 +48,8 @@ sys.path.insert(0,pdir)
 from SurveyFuncs import *
 
 def usage():
-    print 'Count up the keys that are (a) re-used and (b) use RSA key transport'
-    print 'usage: ' + sys.argv[0] + ' -i <space separated list of cluster files>'
+    print ('Count up the keys that are (a) re-used and (b) use RSA key transport')
+    print ('usage: ' + sys.argv[0] + ' -i <space separated list of cluster files>')
     sys.exit(99)
 
 # command line arg handling 
@@ -65,12 +65,12 @@ if args.fnames is None:
 
 # main line processing ...
 
-print "Starting"
+print ("Starting")
 
 # this file comes from https://testssl.sh/mapping-rfc.txt, which is GPL
 cslistfile=os.path.dirname(os.path.realpath(__file__))+"/mapping-rfc.txt"
 if not os.path.exists(cslistfile):
-    print "Can't open " + cslistfile
+    print ("Can't open " + cslistfile)
     sys.exit(1)
 
 csinfo={}
@@ -81,7 +81,7 @@ csinfo={}
 # RSA key transport
 def loadcs():
     if len(csinfo) > 0:
-        print "Done already"
+        print ("Done already")
         return
     try:
         fp=open(cslistfile,"r")
@@ -116,7 +116,7 @@ def loadcs():
             csinfo[csdec]={"isbad": bad,"name": csname}
         fp.close()
     except:
-        print "Error loading " + cslistfile + " - exiting"
+        print ("Error loading " + cslistfile + " - exiting")
         sys.exit(2)
 
 loadcs()
@@ -131,14 +131,14 @@ def okcs(cs):
         return False
 
 def pcsinfo():
-    print "Bad list"
+    print ("Bad list")
     for cs in csinfo:
         if csinfo[cs]["isbad"]==True:
-            print str(cs) + " " + csinfo[cs]['name']
-    print "ok list"
+            print (str(cs) + " " + csinfo[cs]['name'])
+    print ("ok list")
     for cs in csinfo:
         if csinfo[cs]["isbad"]==False:
-            print str(cs) + " " + csinfo[cs]['name']
+            print (str(cs) + " " + csinfo[cs]['name'])
 
 # pcsinfo()
 
@@ -157,7 +157,7 @@ fpswithbadcs=[]
 dodgycses={}
 
 for fname in args.fnames.split():
-    print "Reading " + fname
+    print ("Reading " + fname)
 
     # open file
     fp=open(fname,"r")
@@ -193,13 +193,13 @@ for fname in args.fnames.split():
                                     
 
         except Exception as e: 
-            print "Error with " + f.ip + " " + str(e)
+            print ("Error with " + f.ip + " " + str(e))
             pass
 
         # print something now and then to keep operator amused
         checkcount += 1
         if checkcount % 100 == 0:
-            print >> sys.stderr, "Counting bad ciphersuite uses, fingerprint: " + str(checkcount) 
+            print (sys.stderr, "Counting bad ciphersuite uses, fingerprint: " + str(checkcount)) 
         if checkcount % 1000 == 0:
             gc.collect()
 
@@ -209,6 +209,6 @@ for fname in args.fnames.split():
     # close file
     fp.close()
 
-print "Overall:" + str(checkcount) + "\n" + "cuks: " + str(cuk) + "\n" + "coau: " + str(coau)
+print ("Overall:" + str(checkcount) + "\n" + "cuks: " + str(cuk) + "\n" + "coau: " + str(coau))
 for cs in dodgycses:
-    print csinfo[cs]['name'] + " occurs " + str(dodgycses[cs]) +  " times"
+    print (csinfo[cs]['name'] + " occurs " + str(dodgycses[cs]) +  " times")
