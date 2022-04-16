@@ -20,22 +20,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# Count values for cluster that we report on in tablular form:
-# Cluster 		
-# Graph		
-# IPs 	
-# ASes 		
-# AS type(s) 	
-# Crypto Ports 
-# SSH ports
-# SSH keys
-# TLS ports
-# TLS keys 
-# BT certs
-# WC certs
-# Max Key Use  
-# Since..
-
+"""
+Count values for cluster that we report on in tablular form:
+Cluster 		
+Graph		
+IPs 	
+ASes 		
+AS type(s) 	
+Crypto Ports 
+SSH ports
+SSH keys
+TLS ports
+TLS keys 
+BT certs
+WC certs
+Max Key Use  
+Since..
+"""
 import sys
 import os
 import tempfile
@@ -62,6 +63,7 @@ print(codedir)
 pdir=os.path.dirname(codedir)
 print(pdir)
 sys.path.insert(0,pdir)
+
 from SurveyFuncs import *
 
 def usage():

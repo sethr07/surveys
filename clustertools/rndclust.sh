@@ -33,5 +33,5 @@ echo "Total clusters: $count"
 
 # well, this url says this is better, and it's good enough so...
 # https://stackoverflow.com/questions/2556190/random-number-from-a-range-in-a-bash-script
-randclus=$(python -S -c "import random; print random.randrange(1,$count)")
+randclus=$(python3 -S -c "import random; print (random.randrange(1,$count))")
 echo "Randomly picked: $randclus"

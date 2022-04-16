@@ -57,10 +57,10 @@ if args.infile is None:
 
 # checks - can we read/write 
 if not os.access(args.infile,os.R_OK):
-    print >> sys.stderr, "Can't read input file " + args.infile + " - exiting"
+    print (sys.stderr, "Can't read input file " + args.infile + " - exiting")
     sys.exit(1)
 if args.outfile is not None and os.path.isfile(args.outfile) and not os.access(args.outfile,os.W_OK):
-    print >> sys.stderr, "Can't write to output file " + args.outfile + " - exiting"
+    print (sys.stderr, "Can't write to output file " + args.outfile + " - exiting")
     sys.exit(1)
 
 # default to a 100ms wait between checks
@@ -71,12 +71,12 @@ if args.outfile is not None:
 else:
     out_f=sys.stdout
 
-print >>out_f, "Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time()))
+print (out_f, "Running ",sys.argv[0:]," starting at",time.asctime(time.localtime(time.time())))
 
 sleepval=defsleep
 if args.sleepsecs is not None:
     sleepval=float(args.sleepsecs)
-    print >>out_f, "Will sleep for " + str(sleepval) + " seconds between openssl s_client calls"
+    print (out_f, "Will sleep for " + str(sleepval) + " seconds between openssl s_client calls")
 
 opensslcmd={ 
         'p22': "ignore me - I shouldn't be used here", 
@@ -138,7 +138,7 @@ def gettlsserverkey(ip,portstr):
         spki_hash=binascii.hexlify(digest.finalize())
         rv.append(spki_hash)
     except Exception as e:
-        print >> sys.stderr, "gettlsserverkey exception:" + str(e)  
+        print(sys.stderr, "gettlsserverkey exception:" + str(e))
         pass
     return rv
 
@@ -206,13 +206,13 @@ while f:
             if portstr=='p22':
                 continue
             tlscount+=1 # count of ips with some tls
-            print >>out_f,  "Checking " + ip + ":" + portstr + " recorded as: " + f.fprints[portstr]
+            print (out_f,  "Checking " + ip + ":" + portstr + " recorded as: " + f.fprints[portstr])
 
             hkey=gettlsserverkey(ip,portstr)
             if hkey:
-                print  >>out_f, "\tkeys at " + ip + ':' + portstr + " now are:"+str(hkey)
+                print (out_f, "\tkeys at " + ip + ':' + portstr + " now are:"+str(hkey))
             else:
-                print  >>out_f, "\tNo TLS keys visible at " + ip + portstr + " now"
+                print (out_f, "\tNo TLS keys visible at " + ip + portstr + " now")
             ipsdone[ip]=hkey
             for ind in f.rcs:
                 pip=f.rcs[ind]['ip']
@@ -228,14 +228,14 @@ while f:
                         continue
                     # no need to check if we've checked before
                     if donealready(ip,pip,portstr,innerstr):
-                        print "\t"+ ip + ":" + portstr + " and " + pip + ":" + innerstr + " done already"
+                        print ("\t"+ ip + ":" + portstr + " and " + pip + ":" + innerstr + " done already")
                         continue;
                     # yeah, both directions
                     if donealready(pip,ip,innerstr,portstr):
-                        print "\t"+ ip + ":" + portstr + " and " + pip + ":" + innerstr + " done already"
+                        print ("\t"+ ip + ":" + portstr + " and " + pip + ":" + innerstr + " done already")
                         continue;
 
-                    print >>out_f, "\tChecking",ip,':',portstr,"vs",pip
+                    print (out_f, "\tChecking",ip,':',portstr,"vs",pip)
 
                     if pip in ipsdone:
                         pkey=ipsdone[pip]
@@ -244,24 +244,24 @@ while f:
                         ipsdone[pip]=pkey
 
                     if pkey:
-                        print  >>out_f, "\t"+ "keys at " + pip + ':' +  portstr + " now are: " + str(pkey)
+                        print (out_f, "\t"+ "keys at " + pip + ':' +  portstr + " now are: " + str(pkey))
                     else:
-                        print  >>out_f, "\tNo TLS keys visible at " + pip + portstr + " now"
+                        print (out_f, "\tNo TLS keys visible at " + pip + portstr + " now")
 
                     if anymatch(pkey,hkey):
                         matches+=1
                     else:
-                        print >>out_f, "EEK - Discrepency between "+ ip +":"+portstr +" and " + pip +":" +innerstr
-                        print >>out_f, "EEK - " + ip + ":" + portstr+ " == " + str(hkey)
-                        print >>out_f, "EEK - " + pip + ":" +innerstr + " == " + str(pkey)
+                        print (out_f, "EEK - Discrepency between "+ ip +":"+portstr +" and " + pip +":" +innerstr)
+                        print (out_f, "EEK - " + ip + ":" + portstr+ " == " + str(hkey))
+                        print (out_f, "EEK - " + pip + ":" +innerstr + " == " + str(pkey))
                         mismatches+=1
     f=getnextfprint(fp)
 
-print >>out_f, "TLSKey,infile,ipcount,tlscount,matches,mismatches"
-print >>out_f, "TLSKey,"+args.infile+","+str(ipcount)+","+str(tlscount)+","+str(matches)+","+str(mismatches)
+print (out_f, "TLSKey,infile,ipcount,tlscount,matches,mismatches")
+print (out_f, "TLSKey,"+args.infile+","+str(ipcount)+","+str(tlscount)+","+str(matches)+","+str(mismatches))
 #print >>out_f, ipsdone
 
-print >>out_f, "Ran ",sys.argv[0:]," started at ",time.asctime(time.localtime(time.time()))
+print(out_f, "Ran ",sys.argv[0:]," started at ",time.asctime(time.localtime(time.time())))
 
 #jsonpickle.set_encoder_options('json', sort_keys=True, indent=2)
 #print jsonpickle.encode(ipmatrix)

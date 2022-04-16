@@ -29,7 +29,7 @@ import gc, re
 import copy
 import argparse
 import time, datetime
-import dns.resolver #import the module
+#import dns.resolver #import the module
 from dateutil import parser as dparser  # for parsing time from comand line and certs
 import pytz # for adding back TZ info to allow comparisons
 

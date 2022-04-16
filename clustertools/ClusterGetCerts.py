@@ -142,7 +142,7 @@ def gettlscertstr(ip,portstr):
         pc=proc_hash.communicate(input=pem_data)
         return pc[0]
     except Exception as e:
-        print >> sys.stderr, "gettlsserverkey exception:" + str(e)  
+        print (sys.stderr, "gettlsserverkey exception:" + str(e))
         pass
     return certstr
 

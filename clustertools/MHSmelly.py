@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2018 Stephen Farrell, stephen.farrell@cs.tcd.ie
 # 
@@ -47,7 +47,7 @@ parser.add_argument('-o','--output_file',
 args=parser.parse_args()
 
 def usage():
-    print >>sys.stderr, "usage: " + sys.argv[0] + " -i <infile> [-o <putfile>]"
+    print (sys.stderr, "usage: " + sys.argv[0] + " -i <infile> [-o <putfile>]")
     sys.exit(1)
 
 if args.infile is None:
@@ -55,10 +55,10 @@ if args.infile is None:
 
 # checks - can we read/write 
 if not os.access(args.infile,os.R_OK):
-    print >> sys.stderr, "Can't read input file " + args.infile + " - exiting"
+    print ( sys.stderr, "Can't read input file " + args.infile + " - exiting")
     sys.exit(1)
 if args.outfile is not None and os.path.isfile(args.outfile) and not os.access(args.outfile,os.W_OK):
-    print >> sys.stderr, "Can't write to output file " + args.outfile + " - exiting"
+    print (sys.stderr, "Can't write to output file " + args.outfile + " - exiting")
     sys.exit(1)
 
 if args.outfile is not None:
@@ -115,23 +115,23 @@ while f:
 smelly=False
 
 if ipwithnossh>0 and len(hosts) > 0 :
-    print  >>out_f, args.infile + " (" + str(ipcount) + ") is Mixed smelly as we see " + str(ipwithnossh) + " IPs with no SSH and " + str(ipcount-ipwithnossh) + " with"
+    print(out_f, args.infile + " (" + str(ipcount) + ") is Mixed smelly as we see " + str(ipwithnossh) + " IPs with no SSH and " + str(ipcount-ipwithnossh) + " with")
     smelly=True
 
 if len(asns) != 1:
-    print  >>out_f, args.infile + " (" + str(ipcount) + ") is AS smelly with " +str(len(asns)) + " ASes "
+    print(out_f, args.infile + " (" + str(ipcount) + ") is AS smelly with " +str(len(asns)) + " ASes ")
     smelly=True
 
 if ipcount and len(hosts) >1 :
-    print  >>out_f, args.infile + " (" + str(ipcount) + ") is SSH smelly with " +str(len(hosts)) + " FPs "
+    print(out_f, args.infile + " (" + str(ipcount) + ") is SSH smelly with " +str(len(hosts)) + " FPs ")
     smelly=True
 
 if smelly:
-    print >>out_f,  args.infile + " (" + str(ipcount) + ") General smelly flag "
+    print(out_f,  args.infile + " (" + str(ipcount) + ") General smelly flag ")
     for fp in hosts:
-        print >>out_f,  args.infile + " (" + str(ipcount) + ") SSH " + fp + " is seen " + str(hosts[fp]) + " times "
+        print(out_f,  args.infile + " (" + str(ipcount) + ") SSH " + fp + " is seen " + str(hosts[fp]) + " times ")
     for asn in asns:
-        print >>out_f,  args.infile + " (" + str(ipcount) + ") ASN " + str(asn) + " is seen " + str(asns[asn]) + " times "
+        print(out_f,  args.infile + " (" + str(ipcount) + ") ASN " + str(asn) + " is seen " + str(asns[asn]) + " times ")
 
 if not smelly and len(hosts)==1 and len(asns)==1 and ipwithnossh==0 :
     thefp=''
@@ -140,7 +140,7 @@ if not smelly and len(hosts)==1 and len(asns)==1 and ipwithnossh==0 :
     theasn=0
     for asn in asns:
         theasn=asn
-    print >>out_f,  args.infile + " (" + str(ipcount) + ") Possible Multi-Homed-Host with FP " + thefp + " in ASN " + str(theasn)
+    print (out_f,  args.infile + " (" + str(ipcount) + ") Possible Multi-Homed-Host with FP " + thefp + " in ASN " + str(theasn))
 
 #print >>out_f, "Ran ",sys.argv[0:]," finished at ",time.asctime(time.localtime(time.time()))
 
