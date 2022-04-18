@@ -28,7 +28,7 @@
 #Calls python script for creating GeoIPWHoisCountry.csv
 
 echo "Setting up MaxMind API"
-CURRDIR="$HOME/code/surveys"
+srcdir="$HOME/code/surveys"
 dpath=`grep mmdbpath $HOME/code/surveys/SurveyFuncs.py  | head -1 | awk -F\' '{print $2}' | sed -e 's/\/$//'`
 DESTDIR=$HOME/$dpath
 
@@ -103,7 +103,7 @@ cp $dirname/$fname1 $DESTDIR/$fname1
 cp $dirname/$fname2 $DESTDIR/$fname2
 
 echo "Creating csv file of ips country wise"
-$CURRDIR/MMips.py
+$srcdir/MMips.py
 #rm -f $fname1
 #rm -f $fname2
 echo "MMDB Setup Done."

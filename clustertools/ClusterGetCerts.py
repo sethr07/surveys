@@ -124,7 +124,8 @@ def gettlscertstr(ip,portstr):
         print ("Sleepin for ",sleepval)
         time.sleep(sleepval)
         pc=proc.communicate()
-        lines=pc[0].split('\n')
+        lines=pc[0].split(b'\n')
+        print(lines)
         incert=False
         pem_data=''
         for x in range(0,len(lines)):
@@ -164,9 +165,10 @@ checkcount=0
 fp = open(args.fname,"r")
 
 jsonpickle.set_encoder_options('json', sort_keys=True, indent=2)
-f = getnextfprint(fp)
-while f:
 
+f = getnextfprint(fp)
+while f := getnextfprint(fp):
+    
     for port in f.fprints:
         print (outf, "Doing",f.ip,port,f.analysis[port])
         certstr=gettlscertstr(f.ip,port)
@@ -181,7 +183,6 @@ while f:
 
     # read next fp
     del f
-    f=getnextfprint(fp)
 
 # close file
 fp.close()
